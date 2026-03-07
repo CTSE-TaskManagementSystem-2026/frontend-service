@@ -68,7 +68,7 @@ export default function Footer() {
                   color: 'var(--text-primary)',
                 }}
               >
-                NEXUS
+                TaskMaster
               </span>
             </div>
             <p
@@ -171,7 +171,7 @@ export default function Footer() {
               letterSpacing: '0.06em',
             }}
           >
-            © {new Date().getFullYear()} NEXUS Platform. All rights reserved.
+            © {new Date().getFullYear()} TaskMaster Platform. All rights reserved.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span

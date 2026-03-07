@@ -1,23 +1,123 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 
 const TABS = ['Profile', 'Security', 'Notifications', 'API Tokens'];
 
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('Profile');
-  const [profile, setProfile] = useState({ name: 'John Doe', email: 'john@company.com', role: 'Admin', bio: 'Engineering lead working on microservice architecture and distributed systems.', timezone: 'UTC+0', avatar: 'JD' });
+  const [profile, setProfile] = useState({ name: '', email: '', role: '', bio: '', timezone: 'UTC+5:30', avatar: '' });
+  const [fetchLoading, setFetchLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
   const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [pwSaved, setPwSaved] = useState(false);
+  const [pwError, setPwError] = useState('');
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  // Fetch real profile data on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setFetchError('Not authenticated. Please log in.');
+      setFetchLoading(false);
+      return;
+    }
+    fetch('/api/auth/profile', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data._id) {
+          setProfile({
+            name: data.name || '',
+            email: data.email || '',
+            role: data.role || '',
+            bio: data.bio || '',
+            timezone: data.timezone || 'UTC+5:30',
+            avatar: getInitials(data.name || '?'),
+          });
+        } else {
+          setFetchError(data.message || 'Failed to load profile');
+        }
+      })
+      .catch(() => setFetchError('Network error fetching profile'))
+      .finally(() => setFetchLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaveError('');
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: profile.name, email: profile.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Update failed');
+      // Sync localStorage name
+      localStorage.setItem('name', profile.name);
+      localStorage.setItem('email', profile.email);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err: any) {
+      setSaveError(err.message);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    setPwError('');
+    if (!passwords.current || !passwords.next || !passwords.confirm) {
+      setPwError('All password fields are required.');
+      return;
+    }
+    if (passwords.next !== passwords.confirm) {
+      setPwError('New passwords do not match.');
+      return;
+    }
+    if (passwords.next.length < 8) {
+      setPwError('New password must be at least 8 characters.');
+      return;
+    }
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword: passwords.current, newPassword: passwords.next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Password update failed');
+      setPasswords({ current: '', next: '', confirm: '' });
+      setPwSaved(true);
+      setTimeout(() => setPwSaved(false), 2500);
+    } catch (err: any) {
+      setPwError(err.message);
+    }
   };
 
   return (
-    <DashboardLayout title="Profile" subtitle="NEXUS / ACCOUNT SETTINGS">
+    <DashboardLayout title="Profile" subtitle="TASKMASTER / ACCOUNT SETTINGS">
+      {fetchLoading && (
+        <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>LOADING PROFILE…</div>
+      )}
+      {fetchError && (
+        <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '4px', marginBottom: '1.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#F87171' }}>{fetchError}</div>
+      )}
+      {!fetchLoading && !fetchError && false && null /* gate below */}
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem', padding: '1.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '6px' }}>
         {/* Avatar */}
@@ -54,6 +154,9 @@ export default function ProfilePage() {
               <div style={{ padding: '10px 14px', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#34D399', letterSpacing: '0.04em' }}>
                 ✓ Changes saved successfully
               </div>
+            )}
+            {saveError && (
+              <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#F87171', letterSpacing: '0.04em' }}>{saveError}</div>
             )}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -106,6 +209,12 @@ export default function ProfilePage() {
         {activeTab === 'Security' && (
           <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>Change Password</h3>
+            {pwSaved && (
+              <div style={{ padding: '10px 14px', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#34D399', letterSpacing: '0.04em' }}>✓ Password updated successfully</div>
+            )}
+            {pwError && (
+              <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#F87171' }}>{pwError}</div>
+            )}
             {['current', 'next', 'confirm'].map((field, i) => (
               <div key={field}>
                 <label style={labelStyle}>{['Current Password', 'New Password', 'Confirm New Password'][i]}</label>
@@ -114,7 +223,7 @@ export default function ProfilePage() {
                   onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')} />
               </div>
             ))}
-            <button style={{ alignSelf: 'flex-start', padding: '10px 24px', background: 'var(--accent-cyan)', border: 'none', borderRadius: '4px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.875rem', letterSpacing: '0.05em', color: '#07080F', cursor: 'pointer' }}>
+            <button onClick={handlePasswordChange} style={{ alignSelf: 'flex-start', padding: '10px 24px', background: 'var(--accent-cyan)', border: 'none', borderRadius: '4px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.875rem', letterSpacing: '0.05em', color: '#07080F', cursor: 'pointer' }}>
               Update Password
             </button>
 

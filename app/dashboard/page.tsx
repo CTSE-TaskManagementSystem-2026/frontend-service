@@ -29,7 +29,7 @@ export default function DashboardPage() {
     return (
         <DashboardLayout
       title= "Dashboard"
-    subtitle = "NEXUS PLATFORM / OVERVIEW"
+    subtitle = "TASKMASTER / OVERVIEW"
     actions = {
         < Link
     href = "/projects/create"

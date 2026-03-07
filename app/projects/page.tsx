@@ -32,7 +32,7 @@ export default function ProjectsPage() {
   return (
     <DashboardLayout
       title="Projects"
-      subtitle="NEXUS / ALL PROJECTS"
+      subtitle="TASKMASTER / ALL PROJECTS"
       actions={
         <Link
           href="/projects/create"

@@ -56,7 +56,7 @@ export default function CreateTaskPage() {
   };
 
   return (
-    <DashboardLayout title="Create Task" subtitle="NEXUS / TASKS / NEW">
+    <DashboardLayout title="Create Task" subtitle="TASKMASTER / TASKS / NEW">
       <div style={{ maxWidth: '680px' }}>
         <div style={{ marginBottom: '2rem' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', color: 'var(--text-primary)', letterSpacing: '-0.01em', marginBottom: '0.4rem' }}>New Task</h2>

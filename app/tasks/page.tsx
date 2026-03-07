@@ -36,7 +36,7 @@ export default function TasksPage() {
   return (
     <DashboardLayout
       title="Tasks"
-      subtitle="NEXUS / ALL TASKS"
+      subtitle="TASKMASTER / ALL TASKS"
       actions={
         <Link
           href="/tasks/create"

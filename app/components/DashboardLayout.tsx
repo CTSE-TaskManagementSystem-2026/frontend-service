@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -58,6 +58,24 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children, title, subtitle, actions }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userRole, setUserRole] = useState('');
+  const [userInitials, setUserInitials] = useState('??');
+
+  useEffect(() => {
+    const name = localStorage.getItem('name') || '';
+    const role = localStorage.getItem('role') || '';
+    setUserName(name);
+    setUserRole(role);
+    setUserInitials(
+      name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || '??'
+    );
+  }, []);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
@@ -107,7 +125,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }: 
               color: 'var(--text-primary)',
             }}
           >
-            NEXUS
+            TaskMaster
           </span>
         </div>
 
@@ -213,7 +231,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }: 
                 color: '#07080F',
               }}
             >
-              JD
+              {userInitials}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
@@ -227,7 +245,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }: 
                   whiteSpace: 'nowrap',
                 }}
               >
-                John Doe
+                {userName || 'User'}
               </div>
               <div
                 style={{
@@ -237,7 +255,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }: 
                   letterSpacing: '0.06em',
                 }}
               >
-                Admin
+                {userRole || '—'}
               </div>
             </div>
           </div>

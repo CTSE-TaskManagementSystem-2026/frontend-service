@@ -44,7 +44,7 @@ export default function CreateProjectPage() {
   };
 
   return (
-    <DashboardLayout title="Create Project" subtitle="NEXUS / PROJECTS / NEW">
+    <DashboardLayout title="Create Project" subtitle="TASKMASTER / PROJECTS / NEW">
       <div style={{ maxWidth: '680px' }}>
         {/* Page header */}
         <div style={{ marginBottom: '2rem' }}>

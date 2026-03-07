@@ -1,14 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type AdminSection = 'overview' | 'users' | 'projects' | 'tasks' | 'system';
 
+// Real API user (from auth-service)
 interface User {
-  id: number; name: string; email: string; role: 'ADMIN' | 'MANAGER' | 'MEMBER';
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'; joined: string; projects: number; tasks: number; avatar: string;
+  _id: string; name: string; email: string; role: string;
+  createdAt?: string;
+}
+
+// Local mock type used only by OverviewSection static tables
+interface MockUser {
+  id: number; name: string; email: string; role: string;
+  status: string; joined: string; projects: number; tasks: number; avatar: string;
 }
 interface Project {
   id: number; name: string; owner: string; status: string; tasks: number; done: number;
@@ -21,7 +28,7 @@ interface Task {
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
-const MOCK_USERS: User[] = [
+const MOCK_USERS: MockUser[] = [
   { id: 1, name: 'John Doe',      email: 'john@company.com',  role: 'ADMIN',   status: 'ACTIVE',    joined: 'Jan 3, 2025',  projects: 12, tasks: 47, avatar: 'JD' },
   { id: 2, name: 'Alice Smith',   email: 'alice@company.com', role: 'MANAGER', status: 'ACTIVE',    joined: 'Jan 14, 2025', projects: 7,  tasks: 31, avatar: 'AS' },
   { id: 3, name: 'Mike Kim',      email: 'mike@company.com',  role: 'MEMBER',  status: 'ACTIVE',    joined: 'Feb 2, 2025',  projects: 4,  tasks: 18, avatar: 'MK' },
@@ -213,34 +220,184 @@ function OverviewSection() {
 // ─── Section: Users ───────────────────────────────────────────────────────────
 
 function UsersSection() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [selected, setSelected] = useState<number[]>([]);
 
-  const filtered = MOCK_USERS.filter((u) => {
-    const ms = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
-    const mr = roleFilter === 'ALL' || u.role === roleFilter;
-    const mst = statusFilter === 'ALL' || u.status === statusFilter;
-    return ms && mr && mst;
+  // Create modal state
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '' });
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState('');
+
+  // Edit role state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editRole, setEditRole] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Delete state
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  const authHeader = `Bearer ${token}`;
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/user', {
+        headers: { Authorization: authHeader },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to fetch users');
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [authHeader]);
+
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  // ── Create User ───────────────
+  const handleCreate = async () => {
+    setCreateError('');
+    if (!createForm.name || !createForm.email || !createForm.password) {
+      setCreateError('All fields are required.');
+      return;
+    }
+    setCreateLoading(true);
+    try {
+      const res = await fetch('/api/auth/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+        body: JSON.stringify(createForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to create user');
+      setShowCreate(false);
+      setCreateForm({ name: '', email: '', password: '' });
+      fetchUsers();
+    } catch (err: any) {
+      setCreateError(err.message);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // ── Update Role ───────────────
+  const handleUpdateRole = async (userId: string) => {
+    setEditLoading(true);
+    try {
+      const res = await fetch('/api/auth/user', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+        body: JSON.stringify({ userId, role: editRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to update role');
+      setUsers((prev) =>
+        prev.map((u) => (u._id === userId ? { ...u, role: editRole } : u))
+      );
+      setEditingId(null);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // ── Delete User ───────────────
+  const handleDelete = async (userId: string) => {
+    setDeletingId(userId);
+    try {
+      const res = await fetch(`/api/auth/user?userId=${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: authHeader },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to delete user');
+      setUsers((prev) => prev.filter((u) => u._id !== userId));
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const filtered = users.filter((u) => {
+    const ms = u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase());
+    const mr = roleFilter === 'ALL' || u.role.toLowerCase() === roleFilter.toLowerCase();
+    return ms && mr;
   });
 
-  const toggleSelect = (id: number) =>
-    setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
-  const allSelected = filtered.length > 0 && filtered.every((u) => selected.includes(u.id));
+  const roleColor: Record<string, string> = {
+    admin: '#F59E0B', user: '#22D3EE', manager: '#818CF8',
+  };
+
+  const getInitials = (name: string) =>
+    name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+
+  const formatDate = (iso?: string) =>
+    iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
   return (
     <div>
+      {/* Create User Modal */}
+      {showCreate && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowCreate(false); }}>
+          <div style={{ background: '#0D0E1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '2rem', width: '100%', maxWidth: '420px' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem', color: '#F1F5F9', marginBottom: '1.5rem' }}>Create New User</h3>
+            {createError && (
+              <div style={{ padding: '8px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '4px', marginBottom: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#F87171' }}>{createError}</div>
+            )}
+            {[{ label: 'Full Name', key: 'name', type: 'text', placeholder: 'Jane Smith' },
+              { label: 'Email', key: 'email', type: 'email', placeholder: 'jane@company.com' },
+              { label: 'Password', key: 'password', type: 'password', placeholder: 'Min 8 characters' }].map(({ label, key, type, placeholder }) => (
+              <div key={key} style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: '5px' }}>{label}</label>
+                <input type={type} placeholder={placeholder}
+                  value={(createForm as any)[key]}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, [key]: e.target.value }))}
+                  style={{ width: '100%', padding: '9px 13px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: '#F1F5F9', outline: 'none' }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.5)')}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')} />
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <button onClick={handleCreate} disabled={createLoading}
+                style={{ flex: 1, padding: '10px', background: '#F59E0B', border: 'none', borderRadius: '4px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.875rem', color: '#07080F', cursor: createLoading ? 'not-allowed' : 'pointer', opacity: createLoading ? 0.6 : 1 }}>
+                {createLoading ? 'Creating…' : 'Create User'}
+              </button>
+              <button onClick={() => { setShowCreate(false); setCreateError(''); setCreateForm({ name: '', email: '', password: '' }); }}
+                style={{ padding: '10px 18px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '4px', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <SectionHeader
         title="User Management"
-        subtitle={`${MOCK_USERS.length} TOTAL · ${MOCK_USERS.filter(u => u.status === 'ACTIVE').length} ACTIVE`}
+        subtitle={loading ? 'LOADING…' : `${users.length} TOTAL USERS`}
         action={
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: '#F59E0B', border: 'none', borderRadius: '3px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.04em', color: '#07080F', cursor: 'pointer' }}>
+          <button onClick={() => setShowCreate(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: '#F59E0B', border: 'none', borderRadius: '3px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.04em', color: '#07080F', cursor: 'pointer' }}>
             <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Invite User
+            Create User
           </button>
         }
       />
+
+      {error && (
+        <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '4px', marginBottom: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#F87171' }}>{error}</div>
+      )}
 
       {/* Toolbar */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -253,68 +410,85 @@ function UsersSection() {
             onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.4)')}
             onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')} />
         </div>
-        {[['Role', ['ALL','ADMIN','MANAGER','MEMBER'], roleFilter, setRoleFilter], ['Status', ['ALL','ACTIVE','INACTIVE','SUSPENDED'], statusFilter, setStatusFilter]].map(([label, opts, val, setter]: any) => (
-          <div key={label} style={{ display: 'flex', gap: '3px', background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '4px', padding: '2px' }}>
-            {opts.map((o: string) => (
-              <button key={o} onClick={() => setter(o)}
-                style={{ padding: '4px 10px', borderRadius: '3px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.07em', background: val === o ? 'rgba(245,158,11,0.15)' : 'transparent', color: val === o ? '#F59E0B' : 'rgba(255,255,255,0.35)', transition: 'all 0.2s' }}>
-                {o}
-              </button>
-            ))}
-          </div>
-        ))}
-        {selected.length > 0 && (
-          <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#F59E0B', alignSelf: 'center', letterSpacing: '0.06em' }}>{selected.length} selected</span>
-            {['Suspend', 'Delete'].map((a) => (
-              <button key={a} style={{ padding: '5px 12px', background: 'transparent', border: `1px solid ${a === 'Delete' ? 'rgba(239,68,68,0.4)' : 'rgba(245,158,11,0.4)'}`, borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.06em', color: a === 'Delete' ? '#EF4444' : '#F59E0B', cursor: 'pointer' }}>
-                {a.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: '3px', background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '4px', padding: '2px' }}>
+          {['ALL', 'admin', 'user'].map((r) => (
+            <button key={r} onClick={() => setRoleFilter(r)}
+              style={{ padding: '4px 10px', borderRadius: '3px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.07em', background: roleFilter === r ? 'rgba(245,158,11,0.15)' : 'transparent', color: roleFilter === r ? '#F59E0B' : 'rgba(255,255,255,0.35)', transition: 'all 0.2s' }}>
+              {r.toUpperCase()}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
       <div style={{ background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', overflow: 'hidden' }}>
         {/* Header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 200px 90px 90px 80px 80px 90px', gap: '0.75rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-          <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? [] : filtered.map((u) => u.id))}
-            style={{ cursor: 'pointer', accentColor: '#F59E0B' }} />
-          {['User', 'Email', 'Role', 'Status', 'Projects', 'Tasks', 'Actions'].map((h) => (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px 130px 140px 110px', gap: '0.75rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+          {['User', 'Email', 'Role', 'Joined', 'Actions'].map((h) => (
             <span key={h} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>{h}</span>
           ))}
         </div>
-        {filtered.map((u, i) => (
-          <div key={u.id}
-            style={{ display: 'grid', gridTemplateColumns: '40px 1fr 200px 90px 90px 80px 80px 90px', gap: '0.75rem', padding: '0.875rem 1.25rem', borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', background: selected.includes(u.id) ? 'rgba(245,158,11,0.04)' : 'transparent', transition: 'background 0.15s', cursor: 'default' }}
-            onMouseEnter={(e) => { if (!selected.includes(u.id)) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
-            onMouseLeave={(e) => { if (!selected.includes(u.id)) e.currentTarget.style.background = 'transparent'; }}>
-            <input type="checkbox" checked={selected.includes(u.id)} onChange={() => toggleSelect(u.id)} style={{ cursor: 'pointer', accentColor: '#F59E0B' }} />
+
+        {loading && (
+          <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>LOADING USERS…</div>
+        )}
+
+        {!loading && filtered.map((u, i) => (
+          <div key={u._id}
+            style={{ display: 'grid', gridTemplateColumns: '1fr 220px 130px 140px 110px', gap: '0.75rem', padding: '0.875rem 1.25rem', borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', transition: 'background 0.15s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+            {/* User */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-              <Avatar initials={u.avatar} size={30} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.85rem', color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'rgba(255,255,255,0.28)' }}>{u.joined}</div>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #F59E0B, #F87171)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.72rem', color: '#07080F', flexShrink: 0 }}>
+                {getInitials(u.name)}
               </div>
+              <span style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.85rem', color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</span>
             </div>
+            {/* Email */}
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</span>
-            <Badge text={u.role} color={ROLE_COLOR[u.role]} />
-            <Badge text={u.status} color={USER_STATUS_COLOR[u.status]} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>{u.projects}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>{u.tasks}</span>
+            {/* Role — editable */}
+            {editingId === u._id ? (
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <select value={editRole} onChange={(e) => setEditRole(e.target.value)}
+                  style={{ flex: 1, padding: '4px 6px', background: '#0D0E1A', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: '#F59E0B', outline: 'none' }}>
+                  <option value="user" style={{ background: '#0D0E1A' }}>user</option>
+                  <option value="admin" style={{ background: '#0D0E1A' }}>admin</option>
+                </select>
+                <button onClick={() => handleUpdateRole(u._id)} disabled={editLoading}
+                  style={{ padding: '3px 7px', background: '#F59E0B', border: 'none', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: '#07080F', cursor: 'pointer' }}>✓</button>
+                <button onClick={() => setEditingId(null)}
+                  style={{ padding: '3px 7px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>✕</button>
+              </div>
+            ) : (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.08em', color: roleColor[u.role] || '#94A3B8', background: `${roleColor[u.role] || '#94A3B8'}18`, border: `1px solid ${roleColor[u.role] || '#94A3B8'}35`, padding: '2px 7px', borderRadius: '2px', whiteSpace: 'nowrap' }}>
+                {u.role.toUpperCase()}
+              </span>
+            )}
+            {/* Joined */}
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)' }}>{formatDate(u.createdAt)}</span>
+            {/* Actions */}
             <div style={{ display: 'flex', gap: '4px' }}>
-              {['Edit', 'Ban'].map((a) => (
-                <button key={a} style={{ padding: '4px 8px', background: 'transparent', border: `1px solid ${a === 'Ban' ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.06em', color: a === 'Ban' ? '#F87171' : 'rgba(255,255,255,0.45)', cursor: 'pointer', transition: 'all 0.15s' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = a === 'Ban' ? 'rgba(239,68,68,0.7)' : 'rgba(245,158,11,0.5)'; e.currentTarget.style.color = a === 'Ban' ? '#EF4444' : '#F59E0B'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = a === 'Ban' ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = a === 'Ban' ? '#F87171' : 'rgba(255,255,255,0.45)'; }}>
-                  {a.toUpperCase()}
-                </button>
-              ))}
+              <button
+                onClick={() => { setEditingId(u._id); setEditRole(u.role); }}
+                style={{ padding: '4px 8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(245,158,11,0.5)'; e.currentTarget.style.color = '#F59E0B'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; }}>
+                EDIT
+              </button>
+              <button
+                onClick={() => { if (confirm(`Delete ${u.name}? This cannot be undone.`)) handleDelete(u._id); }}
+                disabled={deletingId === u._id}
+                style={{ padding: '4px 8px', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.06em', color: '#F87171', cursor: deletingId === u._id ? 'not-allowed' : 'pointer', opacity: deletingId === u._id ? 0.5 : 1, transition: 'all 0.15s' }}
+                onMouseEnter={(e) => { if (deletingId !== u._id) { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.7)'; e.currentTarget.style.color = '#EF4444'; } }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; e.currentTarget.style.color = '#F87171'; }}>
+                {deletingId === u._id ? '…' : 'DEL'}
+              </button>
             </div>
           </div>
         ))}
-        {filtered.length === 0 && (
+
+        {!loading && filtered.length === 0 && (
           <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>NO USERS FOUND</div>
         )}
       </div>
@@ -656,7 +830,7 @@ export default function AdminDashboardPage() {
           <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <div style={{ width: '26px', height: '26px', background: 'linear-gradient(135deg, #F59E0B, #F87171)', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)', flexShrink: 0 }} />
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', letterSpacing: '0.06em', color: '#F1F5F9' }}>NEXUS</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', letterSpacing: '0.06em', color: '#F1F5F9' }}>TaskMaster</span>
             </div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 8px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '2px' }}>
               <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#F59E0B' }} />
