@@ -33,10 +33,10 @@ export default function SignupPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_SERVICE_URL}/auth/register`, {
+      const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
+        body: JSON.stringify({ action: 'register', name: form.name, email: form.email, password: form.password }),
       });
       if (!res.ok) throw new Error((await res.json()).message || 'Registration failed');
       window.location.href = '/login';
@@ -92,7 +92,7 @@ export default function SignupPage() {
         {/* Logo */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '2.5rem', justifyContent: 'center' }}>
           <div style={{ width: '30px', height: '30px', background: 'linear-gradient(135deg, #22D3EE, #818CF8)', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.3rem', letterSpacing: '0.06em', color: 'var(--text-primary)' }}>NEXUS</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.3rem', letterSpacing: '0.06em', color: 'var(--text-primary)' }}>TaskMaster</span>
         </Link>
 
         <div className="glass-card" style={{ borderRadius: '8px', padding: '2.5rem', background: 'rgba(13,14,26,0.85)' }}>
