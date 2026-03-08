@@ -1,66 +1,132 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import DashboardLayout from '../components/DashboardLayout';
+import { useState, useEffect } from "react";
+import DashboardLayout from "../components/DashboardLayout";
 
-const TABS = ['Profile', 'Security', 'Notifications', 'API Tokens'];
+const TABS = ["Profile", "Security"];
 
-const labelCls = 'prof-label';
-const inputCls = 'prof-input';
-const alertCls = 'prof-alert';
+const labelCls = "prof-label";
+const inputCls = "prof-input";
+const alertCls = "prof-alert";
 
 function getInitials(name: string) {
-  return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState('Profile');
-  const [profile, setProfile] = useState({ name: '', email: '', role: '', bio: '', timezone: 'UTC+5:30', avatar: '' });
+  const [activeTab, setActiveTab] = useState("Profile");
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    role: "",
+    bio: "",
+    timezone: "UTC+5:30",
+    avatar: "",
+  });
   const [fetchLoading, setFetchLoading] = useState(true);
-  const [fetchError, setFetchError] = useState('');
-  const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
+  const [fetchError, setFetchError] = useState("");
+  const [passwords, setPasswords] = useState({
+    current: "",
+    next: "",
+    confirm: "",
+  });
   const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState('');
+  const [saveError, setSaveError] = useState("");
   const [pwSaved, setPwSaved] = useState(false);
-  const [pwError, setPwError] = useState('');
+  const [pwError, setPwError] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) { setFetchError('Not authenticated. Please log in.'); setFetchLoading(false); return; }
-    fetch('/api/auth/profile', { headers: { Authorization: `Bearer ${token}` } })
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setFetchError("Not authenticated. Please log in.");
+      setFetchLoading(false);
+      return;
+    }
+    fetch("/api/auth/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => res.json())
       .then((data) => {
-        if (data._id) setProfile({ name: data.name || '', email: data.email || '', role: data.role || '', bio: data.bio || '', timezone: data.timezone || 'UTC+5:30', avatar: getInitials(data.name || '?') });
-        else setFetchError(data.message || 'Failed to load profile');
+        if (data._id)
+          setProfile({
+            name: data.name || "",
+            email: data.email || "",
+            role: data.role || "",
+            bio: data.bio || "",
+            timezone: data.timezone || "UTC+5:30",
+            avatar: getInitials(data.name || "?"),
+          });
+        else setFetchError(data.message || "Failed to load profile");
       })
-      .catch(() => setFetchError('Network error fetching profile'))
+      .catch(() => setFetchError("Network error fetching profile"))
       .finally(() => setFetchLoading(false));
   }, []);
 
   const handleSave = async () => {
-    setSaveError('');
-    const token = localStorage.getItem('token'); if (!token) return;
+    setSaveError("");
+    const token = localStorage.getItem("token");
+    if (!token) return;
     try {
-      const res = await fetch('/api/auth/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ name: profile.name, email: profile.email }) });
+      const res = await fetch("/api/auth/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: profile.name, email: profile.email, bio: profile.bio }),
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Update failed');
-      localStorage.setItem('name', profile.name); localStorage.setItem('email', profile.email);
-      setSaved(true); setTimeout(() => setSaved(false), 2500);
-    } catch (err: unknown) { setSaveError(err instanceof Error ? err.message : 'Update failed'); }
+      if (!res.ok) throw new Error(data.message || "Update failed");
+      localStorage.setItem("name", profile.name);
+      localStorage.setItem("email", profile.email);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : "Update failed");
+    }
   };
 
   const handlePasswordChange = async () => {
-    setPwError('');
-    if (!passwords.current || !passwords.next || !passwords.confirm) { setPwError('All password fields are required.'); return; }
-    if (passwords.next !== passwords.confirm) { setPwError('New passwords do not match.'); return; }
-    if (passwords.next.length < 8) { setPwError('New password must be at least 8 characters.'); return; }
-    const token = localStorage.getItem('token'); if (!token) return;
+    setPwError("");
+    if (!passwords.current || !passwords.next || !passwords.confirm) {
+      setPwError("All password fields are required.");
+      return;
+    }
+    if (passwords.next !== passwords.confirm) {
+      setPwError("New passwords do not match.");
+      return;
+    }
+    if (passwords.next.length < 8) {
+      setPwError("New password must be at least 8 characters.");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token) return;
     try {
-      const res = await fetch('/api/auth/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ currentPassword: passwords.current, newPassword: passwords.next }) });
+      const res = await fetch("/api/auth/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: passwords.current,
+          newPassword: passwords.next,
+        }),
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Password update failed');
-      setPasswords({ current: '', next: '', confirm: '' }); setPwSaved(true); setTimeout(() => setPwSaved(false), 2500);
-    } catch (err: unknown) { setPwError(err instanceof Error ? err.message : 'Error'); }
+      if (!res.ok) throw new Error(data.message || "Password update failed");
+      setPasswords({ current: "", next: "", confirm: "" });
+      setPwSaved(true);
+      setTimeout(() => setPwSaved(false), 2500);
+    } catch (err: unknown) {
+      setPwError(err instanceof Error ? err.message : "Error");
+    }
   };
 
   return (
@@ -373,136 +439,211 @@ export default function ProfilePage() {
 
       <DashboardLayout title="Profile" subtitle="TASKMASTER / ACCOUNT SETTINGS">
         {fetchLoading && (
-          <div style={{ padding: '3rem 0', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.1em' }}>
+          <div
+            style={{
+              padding: "3rem 0",
+              textAlign: "center",
+              fontFamily: "IBM Plex Mono, monospace",
+              fontSize: "0.75rem",
+              color: "#475569",
+              letterSpacing: "0.1em",
+            }}
+          >
             LOADING PROFILE…
           </div>
         )}
-        {fetchError && <div className={`${alertCls} prof-alert-error`} style={{ marginBottom: '1.5rem' }}>{fetchError}</div>}
+        {fetchError && (
+          <div
+            className={`${alertCls} prof-alert-error`}
+            style={{ marginBottom: "1.5rem" }}
+          >
+            {fetchError}
+          </div>
+        )}
 
         {/* Header card */}
         <div className="prof-header-card">
-          <div style={{ position: 'relative' }}>
-            <div style={{ width: '72px', height: '72px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#07080f', background: 'linear-gradient(135deg, #22D3EE, #818CF8)' }}>
+          <div style={{ position: "relative" }}>
+            <div
+              style={{
+                width: "72px",
+                height: "72px",
+                borderRadius: "50%",
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "Syne, sans-serif",
+                fontWeight: 800,
+                fontSize: "1.4rem",
+                color: "#07080f",
+                background: "linear-gradient(135deg, #22D3EE, #818CF8)",
+              }}
+            >
               {profile.avatar}
             </div>
             <button className="prof-avatar-edit">
-              <svg width="10" height="10" fill="none" stroke="#07080F" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+              <svg
+                width="10"
+                height="10"
+                fill="none"
+                stroke="#07080F"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+              </svg>
             </button>
           </div>
           <div style={{ flex: 1 }}>
-            <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1.2rem', color: '#f1f5f9', marginBottom: '2px' }}>{profile.name}</h2>
-            <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.72rem', color: '#475569', marginBottom: '0.375rem' }}>{profile.email}</div>
-            <span className="prof-role-badge">{profile.role.toUpperCase()}</span>
+            <h2
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontWeight: 700,
+                fontSize: "1.2rem",
+                color: "#f1f5f9",
+                marginBottom: "2px",
+              }}
+            >
+              {profile.name}
+            </h2>
+            <div
+              style={{
+                fontFamily: "IBM Plex Mono, monospace",
+                fontSize: "0.72rem",
+                color: "#475569",
+                marginBottom: "0.375rem",
+              }}
+            >
+              {profile.email}
+            </div>
+            <span className="prof-role-badge">
+              {profile.role.toUpperCase()}
+            </span>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="prof-tabs">
           {TABS.map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`prof-tab-btn ${activeTab === tab ? 'prof-tab-btn-active' : 'prof-tab-btn-inactive'}`}>
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`prof-tab-btn ${activeTab === tab ? "prof-tab-btn-active" : "prof-tab-btn-inactive"}`}
+            >
               {tab}
             </button>
           ))}
         </div>
 
-        <div style={{ maxWidth: '600px' }}>
+        <div style={{ maxWidth: "600px" }}>
           {/* Profile tab */}
-          {activeTab === 'Profile' && (
+          {activeTab === "Profile" && (
             <div className="prof-panel">
-              {saved && <div className={`${alertCls} prof-alert-success`}>✓ Changes saved successfully</div>}
-              {saveError && <div className={`${alertCls} prof-alert-error`}>{saveError}</div>}
+              {saved && (
+                <div className={`${alertCls} prof-alert-success`}>
+                  ✓ Changes saved successfully
+                </div>
+              )}
+              {saveError && (
+                <div className={`${alertCls} prof-alert-error`}>
+                  {saveError}
+                </div>
+              )}
               <div className="prof-grid-2">
-                <div><label className={labelCls}>Full Name</label><input type="text" value={profile.name} onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} className={inputCls} /></div>
-                <div><label className={labelCls}>Email</label><input type="email" value={profile.email} onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))} className={inputCls} /></div>
+                <div>
+                  <label className={labelCls}>Full Name</label>
+                  <input
+                    type="text"
+                    value={profile.name}
+                    onChange={(e) =>
+                      setProfile((p) => ({ ...p, name: e.target.value }))
+                    }
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Email</label>
+                  <input
+                    type="email"
+                    value={profile.email}
+                    onChange={(e) =>
+                      setProfile((p) => ({ ...p, email: e.target.value }))
+                    }
+                    className={inputCls}
+                  />
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Bio</label>
-                <textarea value={profile.bio} onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))} rows={3} className={inputCls} style={{ resize: 'vertical', lineHeight: 1.6 }} />
+                <textarea
+                  value={profile.bio}
+                  onChange={(e) =>
+                    setProfile((p) => ({ ...p, bio: e.target.value }))
+                  }
+                  rows={3}
+                  className={inputCls}
+                  style={{ resize: "vertical", lineHeight: 1.6 }}
+                />
               </div>
-              <div className="prof-grid-2">
-                <div><label className={labelCls}>Role</label><input type="text" value={profile.role} disabled className={`${inputCls} prof-input-disabled`} /></div>
-                <div>
-                  <label className={labelCls}>Timezone</label>
-                  <select value={profile.timezone} onChange={(e) => setProfile((p) => ({ ...p, timezone: e.target.value }))} className={inputCls} style={{ cursor: 'pointer' }}>
-                    {['UTC-8', 'UTC-5', 'UTC+0', 'UTC+1', 'UTC+5:30', 'UTC+8', 'UTC+9'].map((tz) => <option key={tz} value={tz} style={{ background: '#0D0E1A' }}>{tz}</option>)}
-                  </select>
-                </div>
-              </div>
-              <button onClick={handleSave} className="prof-save-btn">Save Changes</button>
+              <button onClick={handleSave} className="prof-save-btn">
+                Save Changes
+              </button>
             </div>
           )}
 
           {/* Security tab */}
-          {activeTab === 'Security' && (
+          {activeTab === "Security" && (
             <div className="prof-panel">
-              <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1rem', color: '#f1f5f9' }}>Change Password</h3>
-              {pwSaved && <div className={`${alertCls} prof-alert-success`}>✓ Password updated successfully</div>}
-              {pwError && <div className={`${alertCls} prof-alert-error`}>{pwError}</div>}
-              {(['current', 'next', 'confirm'] as const).map((field, i) => (
+              <h3
+                style={{
+                  fontFamily: "Syne, sans-serif",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  color: "#f1f5f9",
+                }}
+              >
+                Change Password
+              </h3>
+              {pwSaved && (
+                <div className={`${alertCls} prof-alert-success`}>
+                  ✓ Password updated successfully
+                </div>
+              )}
+              {pwError && (
+                <div className={`${alertCls} prof-alert-error`}>{pwError}</div>
+              )}
+              {(["current", "next", "confirm"] as const).map((field, i) => (
                 <div key={field}>
-                  <label className={labelCls}>{['Current Password', 'New Password', 'Confirm New Password'][i]}</label>
-                  <input type="password" placeholder="••••••••" value={passwords[field]} onChange={(e) => setPasswords((p) => ({ ...p, [field]: e.target.value }))} className={inputCls} />
+                  <label className={labelCls}>
+                    {
+                      [
+                        "Current Password",
+                        "New Password",
+                        "Confirm New Password",
+                      ][i]
+                    }
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={passwords[field]}
+                    onChange={(e) =>
+                      setPasswords((p) => ({ ...p, [field]: e.target.value }))
+                    }
+                    className={inputCls}
+                  />
                 </div>
               ))}
-              <button onClick={handlePasswordChange} className="prof-save-btn">Update Password</button>
+              <button onClick={handlePasswordChange} className="prof-save-btn">
+                Update Password
+              </button>
               <div className="prof-danger-zone">
                 <div className="prof-danger-label">DANGER ZONE</div>
-                <p className="prof-danger-text">Permanently delete your account and all associated data.</p>
+                <p className="prof-danger-text">
+                  Permanently delete your account and all associated data.
+                </p>
                 <button className="prof-danger-btn">DELETE ACCOUNT</button>
-              </div>
-            </div>
-          )}
-
-          {/* Notifications tab */}
-          {activeTab === 'Notifications' && (
-            <div className="prof-panel" style={{ gap: 0, padding: '0 2rem' }}>
-              {[
-                { label: 'Task assigned to you',  description: 'Get notified when someone assigns you a task',       on: true  },
-                { label: 'Project updates',        description: 'Changes to projects you are a member of',            on: true  },
-                { label: 'Task due reminders',     description: 'Reminder 24h before a task is due',                 on: false },
-                { label: 'Weekly digest',          description: "Summary of your team's activity every Monday",       on: true  },
-                { label: 'Security alerts',        description: 'Login from a new device or location',               on: true  },
-              ].map((item, i, arr) => (
-                <div key={item.label} className="prof-notif-row" style={{ borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
-                  <div>
-                    <div className="prof-notif-title">{item.label}</div>
-                    <div className="prof-notif-desc">{item.description}</div>
-                  </div>
-                  <div style={{ width: '40px', height: '22px', borderRadius: '11px', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s ease', background: item.on ? '#22D3EE' : 'rgba(255,255,255,0.1)' }}>
-                    <div style={{ position: 'absolute', top: '3px', left: item.on ? '21px' : '3px', width: '16px', height: '16px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s ease' }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* API Tokens tab */}
-          {activeTab === 'API Tokens' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div className="prof-gen-panel">
-                <h3 className="prof-gen-title">Generate New Token</h3>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <input type="text" placeholder="Token name (e.g. CI/CD pipeline)" className={inputCls} style={{ flex: 1 }} />
-                  <button className="prof-gen-btn">Generate</button>
-                </div>
-              </div>
-              <div className="prof-token-panel">
-                <div className="prof-token-header">
-                  <span className="prof-token-label">Active Tokens</span>
-                </div>
-                {[
-                  { name: 'CI/CD Pipeline', created: 'Mar 1, 2025',  lastUsed: '2h ago', prefix: 'nxs_a8f2…' },
-                  { name: 'Local Dev',       created: 'Feb 14, 2025', lastUsed: '5m ago', prefix: 'nxs_c1d9…' },
-                ].map((token, i, arr) => (
-                  <div key={token.name} className="prof-token-row" style={{ borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
-                    <div style={{ flex: 1 }}>
-                      <div className="prof-token-name">{token.name}</div>
-                      <div className="prof-token-meta">{token.prefix} · Created {token.created} · Last used {token.lastUsed}</div>
-                    </div>
-                    <button className="prof-revoke-btn">REVOKE</button>
-                  </div>
-                ))}
               </div>
             </div>
           )}

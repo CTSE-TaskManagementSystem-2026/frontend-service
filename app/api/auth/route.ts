@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ message: 'Invalid action' }, { status: 400 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Auth proxy error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }

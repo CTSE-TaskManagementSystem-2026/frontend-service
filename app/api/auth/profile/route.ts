@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         }
 
         return NextResponse.json(data, { status: 200 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Profile proxy GET error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
@@ -69,7 +69,7 @@ export async function PUT(request: NextRequest) {
         }
 
         return NextResponse.json(data, { status: 200 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Profile proxy PUT error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
