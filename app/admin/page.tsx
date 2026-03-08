@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AdminSection = 'overview' | 'users' | 'projects' | 'tasks' | 'system';
+type AdminSection = 'overview' | 'users' | 'projects' | 'tasks';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 // Real API user (from auth-service)
 interface User {
@@ -12,72 +14,19 @@ interface User {
   createdAt?: string;
 }
 
-// Local mock type used only by OverviewSection static tables
-interface MockUser {
-  id: number; name: string; email: string; role: string;
-  status: string; joined: string; projects: number; tasks: number; avatar: string;
+// Real project shape returned by projects-service
+interface RealProject {
+  _id: string;
+  name: string;
+  description?: string;
+  active: boolean;
+  status: 'active' | 'inactive' | 'archived' | 'completed';
+  dueDate?: string;
+  tasksCount: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
-interface Project {
-  id: number; name: string; owner: string; status: string; tasks: number; done: number;
-  members: number; created: string; color: string;
-}
-interface Task {
-  id: number; title: string; project: string; assignee: string; priority: string;
-  status: string; due: string; createdBy: string;
-}
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-const MOCK_USERS: MockUser[] = [
-  { id: 1, name: 'John Doe',      email: 'john@company.com',  role: 'ADMIN',   status: 'ACTIVE',    joined: 'Jan 3, 2025',  projects: 12, tasks: 47, avatar: 'JD' },
-  { id: 2, name: 'Alice Smith',   email: 'alice@company.com', role: 'MANAGER', status: 'ACTIVE',    joined: 'Jan 14, 2025', projects: 7,  tasks: 31, avatar: 'AS' },
-  { id: 3, name: 'Mike Kim',      email: 'mike@company.com',  role: 'MEMBER',  status: 'ACTIVE',    joined: 'Feb 2, 2025',  projects: 4,  tasks: 18, avatar: 'MK' },
-  { id: 4, name: 'Sara Ren',      email: 'sara@company.com',  role: 'MEMBER',  status: 'INACTIVE',  joined: 'Feb 20, 2025', projects: 2,  tasks: 6,  avatar: 'SR' },
-  { id: 5, name: 'Dan Okafor',    email: 'dan@company.com',   role: 'MANAGER', status: 'ACTIVE',    joined: 'Mar 1, 2025',  projects: 5,  tasks: 22, avatar: 'DO' },
-  { id: 6, name: 'Priya Nair',    email: 'priya@company.com', role: 'MEMBER',  status: 'ACTIVE',    joined: 'Mar 5, 2025',  projects: 3,  tasks: 14, avatar: 'PN' },
-  { id: 7, name: 'Tom Briggs',    email: 'tom@company.com',   role: 'MEMBER',  status: 'SUSPENDED', joined: 'Mar 8, 2025',  projects: 1,  tasks: 3,  avatar: 'TB' },
-  { id: 8, name: 'Lena Hoffmann', email: 'lena@company.com',  role: 'MANAGER', status: 'ACTIVE',    joined: 'Mar 10, 2025', projects: 6,  tasks: 28, avatar: 'LH' },
-];
-
-const MOCK_PROJECTS: Project[] = [
-  { id: 1, name: 'Platform Redesign',  owner: 'John Doe',    status: 'ACTIVE',    tasks: 24, done: 14, members: 5, created: 'Jan 5',  color: '#22D3EE' },
-  { id: 2, name: 'Auth Service v2',    owner: 'Alice Smith', status: 'ACTIVE',    tasks: 18, done: 9,  members: 3, created: 'Jan 14', color: '#F59E0B' },
-  { id: 3, name: 'Analytics Dashboard',owner: 'Mike Kim',    status: 'IN REVIEW', tasks: 31, done: 28, members: 4, created: 'Feb 1',  color: '#818CF8' },
-  { id: 4, name: 'Mobile App',         owner: 'Dan Okafor',  status: 'PLANNED',   tasks: 40, done: 0,  members: 6, created: 'Feb 18', color: '#34D399' },
-  { id: 5, name: 'DevOps Pipeline',    owner: 'John Doe',    status: 'ACTIVE',    tasks: 12, done: 8,  members: 2, created: 'Mar 2',  color: '#F87171' },
-  { id: 6, name: 'API Documentation',  owner: 'Lena Hoffmann',status: 'DONE',     tasks: 8,  done: 8,  members: 2, created: 'Mar 6',  color: '#64748B' },
-];
-
-const MOCK_TASKS: Task[] = [
-  { id: 1,  title: 'Design system audit',       project: 'Platform Redesign', assignee: 'JD', priority: 'HIGH',   status: 'IN PROGRESS', due: 'Mar 12', createdBy: 'Alice Smith' },
-  { id: 2,  title: 'API rate limiting',          project: 'Auth Service v2',   assignee: 'AS', priority: 'HIGH',   status: 'TODO',        due: 'Mar 14', createdBy: 'John Doe' },
-  { id: 3,  title: 'Write integration tests',    project: 'DevOps Pipeline',   assignee: 'MK', priority: 'MEDIUM', status: 'TODO',        due: 'Mar 18', createdBy: 'John Doe' },
-  { id: 4,  title: 'Analytics dashboard v2',     project: 'Analytics Dashboard',assignee: 'JD', priority: 'LOW',   status: 'IN REVIEW',   due: 'Mar 20', createdBy: 'Mike Kim' },
-  { id: 5,  title: 'Deploy to staging',          project: 'DevOps Pipeline',   assignee: 'AS', priority: 'HIGH',   status: 'DONE',        due: 'Mar 10', createdBy: 'Alice Smith' },
-  { id: 6,  title: 'Refresh token rotation',     project: 'Auth Service v2',   assignee: 'MK', priority: 'HIGH',   status: 'IN PROGRESS', due: 'Mar 13', createdBy: 'Alice Smith' },
-  { id: 7,  title: 'Responsive navbar',          project: 'Platform Redesign', assignee: 'JD', priority: 'MEDIUM', status: 'DONE',        due: 'Mar 8',  createdBy: 'John Doe' },
-  { id: 8,  title: 'User onboarding flow',       project: 'Platform Redesign', assignee: 'PN', priority: 'MEDIUM', status: 'TODO',        due: 'Mar 25', createdBy: 'Dan Okafor' },
-  { id: 9,  title: 'Docker compose setup',       project: 'DevOps Pipeline',   assignee: 'DO', priority: 'HIGH',   status: 'DONE',        due: 'Mar 7',  createdBy: 'Dan Okafor' },
-  { id: 10, title: 'Chart.js integration',       project: 'Analytics Dashboard',assignee: 'LH', priority: 'MEDIUM',status: 'IN PROGRESS', due: 'Mar 16', createdBy: 'Lena Hoffmann' },
-];
-
-const ACTIVITY_FEED = [
-  { icon: '✚', color: '#22D3EE', msg: 'Alice Smith created project "Auth Service v2"', time: '2m ago' },
-  { icon: '◎', color: '#F59E0B', msg: 'Tom Briggs account suspended by admin', time: '14m ago' },
-  { icon: '✔', color: '#34D399', msg: 'Task "Deploy to staging" marked done by Alice Smith', time: '1h ago' },
-  { icon: '⊕', color: '#818CF8', msg: 'Priya Nair joined project "Platform Redesign"', time: '2h ago' },
-  { icon: '△', color: '#F87171', msg: 'CRITICAL task overdue: "API rate limiting"', time: '3h ago' },
-  { icon: '◈', color: '#22D3EE', msg: 'Dan Okafor created project "Mobile App"', time: '5h ago' },
-  { icon: '⊛', color: '#F59E0B', msg: 'New user registered: Lena Hoffmann', time: '1d ago' },
-];
-
-// ─── Color maps ───────────────────────────────────────────────────────────────
-
-const ROLE_COLOR: Record<string, string> = { ADMIN: '#F59E0B', MANAGER: '#818CF8', MEMBER: '#22D3EE' };
-const USER_STATUS_COLOR: Record<string, string> = { ACTIVE: '#34D399', INACTIVE: '#64748B', SUSPENDED: '#EF4444' };
-const PRIORITY_COLOR: Record<string, string> = { HIGH: '#EF4444', MEDIUM: '#F59E0B', LOW: '#34D399', CRITICAL: '#A855F7' };
-const TASK_STATUS_COLOR: Record<string, string> = { TODO: '#64748B', 'IN PROGRESS': '#22D3EE', 'IN REVIEW': '#818CF8', DONE: '#34D399' };
-const PROJECT_STATUS_COLOR: Record<string, string> = { ACTIVE: '#22D3EE', 'IN REVIEW': '#818CF8', PLANNED: '#F59E0B', DONE: '#34D399', 'ON HOLD': '#64748B' };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -123,94 +72,100 @@ function SectionHeader({ title, subtitle, action }: { title: string; subtitle?: 
   );
 }
 
-// ─── Section: Overview ────────────────────────────────────────────────────────
+// ─── Section: Overview ─────────────────────────────────────────────────────────────
 
 function OverviewSection() {
-  const activeUsers = MOCK_USERS.filter((u) => u.status === 'ACTIVE').length;
-  const activeProjects = MOCK_PROJECTS.filter((p) => p.status === 'ACTIVE').length;
-  const openTasks = MOCK_TASKS.filter((t) => t.status !== 'DONE').length;
-  const doneTasks = MOCK_TASKS.filter((t) => t.status === 'DONE').length;
+  const [users, setUsers] = useState<User[]>([]);
+  const [projects, setProjects] = useState<RealProject[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  const auth = `Bearer ${token}`;
+
+  const roleColor: Record<string, string> = { admin: '#F59E0B', user: '#22D3EE', manager: '#818CF8' };
+  const getInitials = (name: string) => name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+  const formatDate = (iso?: string) => iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+
+  useEffect(() => {
+    fetch('/api/auth/user', { headers: { Authorization: auth } })
+      .then((r) => r.json())
+      .then((d) => setUsers(Array.isArray(d) ? d : []))
+      .catch(() => {})
+      .finally(() => setUsersLoading(false));
+
+    fetch('/api/projects/admin', { headers: { Authorization: auth } })
+      .then((r) => r.json())
+      .then((d) => setProjects(Array.isArray(d.projects) ? d.projects : []))
+      .catch(() => {})
+      .finally(() => setProjectsLoading(false));
+  }, [auth]);
+
+  const activeProjects = projects.filter((p) => p.status === 'active').length;
+
+  const STATUS_CLR: Record<string, string> = { active: '#22D3EE', inactive: '#64748B', archived: '#F59E0B', completed: '#34D399' };
 
   return (
     <div>
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
-        <StatCard label="Total Users" value={String(MOCK_USERS.length)} sub={`${activeUsers} active`} color="#F59E0B"
+        <StatCard label="Total Users" value={usersLoading ? '…' : String(users.length)} sub={`${users.length} registered`} color="#F59E0B"
           icon={<svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>} />
-        <StatCard label="Total Projects" value={String(MOCK_PROJECTS.length)} sub={`${activeProjects} active`} color="#22D3EE"
+        <StatCard label="Total Projects" value={projectsLoading ? '…' : String(projects.length)} sub={`${activeProjects} active`} color="#22D3EE"
           icon={<svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>} />
-        <StatCard label="Total Tasks" value={String(MOCK_TASKS.length)} sub={`${openTasks} open · ${doneTasks} done`} color="#818CF8"
+        <StatCard label="Completed" value={projectsLoading ? '…' : String(projects.filter((p) => p.status === 'completed').length)} sub="projects done" color="#34D399"
           icon={<svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>} />
-        <StatCard label="Services" value="4 / 4" sub="all systems nominal" color="#34D399"
-          icon={<svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>} />
+        <StatCard label="Archived" value={projectsLoading ? '…' : String(projects.filter((p) => p.status === 'archived').length)} sub="projects archived" color="#818CF8"
+          icon={<svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>} />
       </div>
 
-      {/* Two columns: quick tables + activity */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1rem' }}>
+      {/* Two columns: recent users + recent projects */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
 
-        {/* Recent users + projects stacked */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-          {/* Top users */}
-          <div style={{ background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', overflow: 'hidden' }}>
-            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>Recent Users</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: '#F59E0B', cursor: 'pointer', letterSpacing: '0.06em' }}>VIEW ALL →</span>
-            </div>
-            {MOCK_USERS.slice(0, 4).map((u, i, arr) => (
-              <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.875rem 1.25rem', borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                <Avatar initials={u.avatar} size={32} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.85rem', color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>{u.email}</div>
-                </div>
-                <Badge text={u.role} color={ROLE_COLOR[u.role]} />
-                <Badge text={u.status} color={USER_STATUS_COLOR[u.status]} />
+        {/* Recent Users */}
+        <div style={{ background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', overflow: 'hidden' }}>
+          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>Recent Users</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: '#F59E0B', letterSpacing: '0.06em' }}>{users.length} TOTAL</span>
+          </div>
+          {usersLoading && <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.2)' }}>LOADING…</div>}
+          {!usersLoading && users.slice(0, 5).map((u, i, arr) => (
+            <div key={u._id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.875rem 1.25rem', borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #F59E0B, #F87171)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.72rem', color: '#07080F', flexShrink: 0 }}>
+                {getInitials(u.name)}
               </div>
-            ))}
-          </div>
-
-          {/* Recent projects */}
-          <div style={{ background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', overflow: 'hidden' }}>
-            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>Projects Overview</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: '#F59E0B', cursor: 'pointer', letterSpacing: '0.06em' }}>VIEW ALL →</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.85rem', color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>{formatDate(u.createdAt)}</div>
+              </div>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.08em', color: roleColor[u.role] || '#94A3B8', background: `${roleColor[u.role] || '#94A3B8'}18`, border: `1px solid ${roleColor[u.role] || '#94A3B8'}35`, padding: '2px 7px', borderRadius: '2px' }}>
+                {u.role.toUpperCase()}
+              </span>
             </div>
-            {MOCK_PROJECTS.slice(0, 4).map((p, i, arr) => {
-              const pct = Math.round((p.done / p.tasks) * 100) || 0;
-              return (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.875rem 1.25rem', borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: p.color, flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.85rem', color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '3px' }}>{p.name}</div>
-                    <div style={{ height: '3px', background: 'rgba(255,255,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: p.color, borderRadius: '2px' }} />
-                    </div>
-                  </div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: p.color }}>{pct}%</span>
-                  <Badge text={p.status} color={PROJECT_STATUS_COLOR[p.status]} />
-                </div>
-              );
-            })}
-          </div>
+          ))}
+          {!usersLoading && users.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.2)' }}>NO USERS</div>}
         </div>
 
-        {/* Activity feed */}
+        {/* Recent Projects */}
         <div style={{ background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', overflow: 'hidden' }}>
-          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>Activity Feed</span>
+          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>Recent Projects</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: '#22D3EE', letterSpacing: '0.06em' }}>{projects.length} TOTAL</span>
           </div>
-          <div style={{ padding: '0.5rem 0' }}>
-            {ACTIVITY_FEED.map((a, i) => (
-              <div key={i} style={{ display: 'flex', gap: '10px', padding: '0.75rem 1.25rem', borderBottom: i < ACTIVITY_FEED.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: `${a.color}18`, border: `1px solid ${a.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', color: a.color, flexShrink: 0 }}>{a.icon}</div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.45, marginBottom: '2px' }}>{a.msg}</p>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.06em' }}>{a.time}</span>
-                </div>
+          {projectsLoading && <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.2)' }}>LOADING…</div>}
+          {!projectsLoading && projects.slice(0, 5).map((p, i, arr) => (
+            <div key={p._id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.875rem 1.25rem', borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_CLR[p.status] ?? '#94A3B8', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.85rem', color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                {p.description && <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'rgba(255,255,255,0.28)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description}</div>}
               </div>
-            ))}
-          </div>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.08em', color: STATUS_CLR[p.status] ?? '#94A3B8', background: `${STATUS_CLR[p.status] ?? '#94A3B8'}18`, border: `1px solid ${STATUS_CLR[p.status] ?? '#94A3B8'}35`, padding: '2px 7px', borderRadius: '2px', whiteSpace: 'nowrap' }}>
+                {p.status.toUpperCase()}
+              </span>
+            </div>
+          ))}
+          {!projectsLoading && projects.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.2)' }}>NO PROJECTS</div>}
         </div>
       </div>
     </div>
@@ -496,30 +451,125 @@ function UsersSection() {
   );
 }
 
-// ─── Section: Projects ────────────────────────────────────────────────────────
+// ─── Section: Projects (live data from projects-service) ─────────────────────
 
 function ProjectsSection() {
+  const [projects, setProjects] = useState<RealProject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: '', description: '', status: 'active', dueDate: '' });
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const filtered = MOCK_PROJECTS.filter((p) => {
-    const ms = p.name.toLowerCase().includes(search.toLowerCase()) || p.owner.toLowerCase().includes(search.toLowerCase());
-    const mst = statusFilter === 'ALL' || p.status === statusFilter;
-    return ms && mst;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  const auth = `Bearer ${token}`;
+
+  const fetchProjects = useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const res = await fetch('/api/projects/admin', { headers: { Authorization: auth } });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to fetch projects');
+      setProjects(Array.isArray(data.projects) ? data.projects : []);
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  }, [auth]);
+
+  useEffect(() => { fetchProjects(); }, [fetchProjects]);
+
+  const handleCreate = async () => {
+    setCreateError('');
+    if (!createForm.name.trim()) { setCreateError('Project name is required.'); return; }
+    setCreateLoading(true);
+    try {
+      const res = await fetch('/api/projects/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: auth },
+        body: JSON.stringify({ name: createForm.name, description: createForm.description || undefined, status: createForm.status, dueDate: createForm.dueDate || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to create project');
+      setShowCreate(false); setCreateForm({ name: '', description: '', status: 'active', dueDate: '' }); fetchProjects();
+    } catch (err: any) { setCreateError(err.message); }
+    finally { setCreateLoading(false); }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Delete project "${name}"? This cannot be undone.`)) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/projects/admin?id=${id}`, { method: 'DELETE', headers: { Authorization: auth } });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to delete project');
+      setProjects((prev) => prev.filter((p) => p._id !== id));
+    } catch (err: any) { alert(err.message); }
+    finally { setDeletingId(null); }
+  };
+
+  const STATUS_LABEL: Record<string, string> = { active: 'ACTIVE', inactive: 'INACTIVE', archived: 'ARCHIVED', completed: 'COMPLETED' };
+  const STATUS_CLR: Record<string, string> = { active: '#22D3EE', inactive: '#64748B', archived: '#F59E0B', completed: '#34D399' };
+  const formatDate = (iso?: string) => iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+
+  const filtered = projects.filter((p) => {
+    const ms = p.name.toLowerCase().includes(search.toLowerCase());
+    const sf = statusFilter === 'ALL' || p.status === statusFilter.toLowerCase();
+    return ms && sf;
   });
 
   return (
     <div>
+      {showCreate && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowCreate(false); }}>
+          <div style={{ background: '#0D0E1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '2rem', width: '100%', maxWidth: '440px' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem', color: '#F1F5F9', marginBottom: '1.5rem' }}>New Project</h3>
+            {createError && <div style={{ padding: '8px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '4px', marginBottom: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#F87171' }}>{createError}</div>}
+            {[{ label: 'Project Name *', key: 'name', type: 'text', placeholder: 'My project' },
+              { label: 'Description', key: 'description', type: 'text', placeholder: 'Optional' }].map(({ label, key, type, placeholder }) => (
+              <div key={key} style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: '5px' }}>{label}</label>
+                <input type={type} placeholder={placeholder} value={(createForm as any)[key]}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, [key]: e.target.value }))}
+                  style={{ width: '100%', padding: '9px 13px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: '#F1F5F9', outline: 'none' }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.5)')}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')} />
+              </div>
+            ))}
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: '5px' }}>Status</label>
+              <select value={createForm.status} onChange={(e) => setCreateForm((f) => ({ ...f, status: e.target.value }))} style={{ width: '100%', padding: '9px 13px', background: '#0D0E1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#F1F5F9', outline: 'none' }}>
+                {['active', 'inactive', 'archived', 'completed'].map((s) => <option key={s} value={s} style={{ background: '#0D0E1A' }}>{s}</option>)}
+              </select>
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: '5px' }}>Due Date</label>
+              <input type="date" value={createForm.dueDate} onChange={(e) => setCreateForm((f) => ({ ...f, dueDate: e.target.value }))} style={{ width: '100%', padding: '9px 13px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#F1F5F9', outline: 'none', colorScheme: 'dark' }} onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.5)')} onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')} />
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button onClick={handleCreate} disabled={createLoading} style={{ flex: 1, padding: '10px', background: '#F59E0B', border: 'none', borderRadius: '4px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.875rem', color: '#07080F', cursor: createLoading ? 'not-allowed' : 'pointer', opacity: createLoading ? 0.6 : 1 }}>{createLoading ? 'Creating…' : 'Create Project'}</button>
+              <button onClick={() => { setShowCreate(false); setCreateError(''); setCreateForm({ name: '', description: '', status: 'active', dueDate: '' }); }} style={{ padding: '10px 18px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '4px', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <SectionHeader
         title="All Projects"
-        subtitle={`${MOCK_PROJECTS.length} TOTAL PROJECTS`}
+        subtitle={loading ? 'LOADING…' : `${projects.length} TOTAL PROJECTS`}
         action={
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: '#F59E0B', border: 'none', borderRadius: '3px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.04em', color: '#07080F', cursor: 'pointer' }}>
+          <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: '#F59E0B', border: 'none', borderRadius: '3px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.04em', color: '#07080F', cursor: 'pointer' }}>
             <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Project
           </button>
         }
       />
+
+
+      {error && <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '4px', marginBottom: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#F87171' }}>{error}</div>}
 
       {/* Toolbar */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
@@ -533,10 +583,10 @@ function ProjectsSection() {
             onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')} />
         </div>
         <div style={{ display: 'flex', gap: '3px', background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '4px', padding: '2px' }}>
-          {['ALL', 'ACTIVE', 'IN REVIEW', 'PLANNED', 'DONE'].map((s) => (
+          {['ALL', 'active', 'inactive', 'archived', 'completed'].map((s) => (
             <button key={s} onClick={() => setStatusFilter(s)}
               style={{ padding: '4px 10px', borderRadius: '3px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.07em', background: statusFilter === s ? 'rgba(245,158,11,0.15)' : 'transparent', color: statusFilter === s ? '#F59E0B' : 'rgba(255,255,255,0.35)', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
-              {s}
+              {s.toUpperCase()}
             </button>
           ))}
         </div>
@@ -544,74 +594,209 @@ function ProjectsSection() {
 
       {/* Table */}
       <div style={{ background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 150px 110px 130px 80px 80px 100px', gap: '0.75rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-          {['Project', 'Owner', 'Status', 'Progress', 'Tasks', 'Members', 'Actions'].map((h) => (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px 120px 100px 110px 100px', gap: '0.75rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+          {['Project', 'Status', 'Tasks', 'Due Date', 'Created', 'Actions'].map((h) => (
             <span key={h} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>{h}</span>
           ))}
         </div>
-        {filtered.map((p, i) => {
-          const pct = Math.round((p.done / p.tasks) * 100) || 0;
-          return (
-            <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '1fr 150px 110px 130px 80px 80px 100px', gap: '0.75rem', padding: '0.875rem 1.25rem', borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', transition: 'background 0.15s' }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: p.color, flexShrink: 0 }} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.875rem', color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'rgba(255,255,255,0.28)' }}>{p.created}</div>
-                </div>
-              </div>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.owner}</span>
-              <Badge text={p.status} color={PROJECT_STATUS_COLOR[p.status]} />
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>{p.done}/{p.tasks}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: p.color }}>{pct}%</span>
-                </div>
-                <div style={{ height: '3px', background: 'rgba(255,255,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${pct}%`, background: p.color, borderRadius: '2px' }} />
-                </div>
-              </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>{p.tasks}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>{p.members}</span>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {['View', 'Delete'].map((a) => (
-                  <button key={a} style={{ padding: '4px 8px', background: 'transparent', border: `1px solid ${a === 'Delete' ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.06em', color: a === 'Delete' ? '#F87171' : 'rgba(255,255,255,0.45)', cursor: 'pointer', transition: 'all 0.15s' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = a === 'Delete' ? 'rgba(239,68,68,0.7)' : 'rgba(245,158,11,0.5)'; e.currentTarget.style.color = a === 'Delete' ? '#EF4444' : '#F59E0B'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = a === 'Delete' ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = a === 'Delete' ? '#F87171' : 'rgba(255,255,255,0.45)'; }}>
-                    {a.toUpperCase()}
-                  </button>
-                ))}
-              </div>
+        {loading && <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>LOADING PROJECTS…</div>}
+        {!loading && filtered.map((p, i) => (
+          <div key={p._id}
+            style={{ display: 'grid', gridTemplateColumns: '1fr 160px 120px 100px 110px 100px', gap: '0.75rem', padding: '0.875rem 1.25rem', borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', transition: 'background 0.15s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.875rem', color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+              {p.description && <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'rgba(255,255,255,0.28)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '1px' }}>{p.description}</div>}
             </div>
-          );
-        })}
+            <Badge text={STATUS_LABEL[p.status] ?? p.status.toUpperCase()} color={STATUS_CLR[p.status] ?? '#94A3B8'} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>{p.tasksCount} tasks</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: p.dueDate && new Date(p.dueDate) < new Date() ? '#F87171' : 'rgba(255,255,255,0.35)' }}>
+              {p.dueDate ? formatDate(p.dueDate) : '—'}
+            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)' }}>{formatDate(p.createdAt)}</span>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button onClick={() => handleDelete(p._id, p.name)} disabled={deletingId === p._id}
+                style={{ padding: '4px 8px', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.06em', color: '#F87171', cursor: deletingId === p._id ? 'not-allowed' : 'pointer', opacity: deletingId === p._id ? 0.5 : 1, transition: 'all 0.15s' }}
+                onMouseEnter={(e) => { if (deletingId !== p._id) { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.7)'; e.currentTarget.style.color = '#EF4444'; } }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; e.currentTarget.style.color = '#F87171'; }}>
+                {deletingId === p._id ? '…' : 'DEL'}
+              </button>
+            </div>
+          </div>
+        ))}
+        {!loading && filtered.length === 0 && <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>NO PROJECTS FOUND</div>}
       </div>
     </div>
   );
 }
 
-// ─── Section: Tasks ───────────────────────────────────────────────────────────
+
+// ─── Section: Tasks ────────────────────────────────────────────────────────────
+
+interface AdminTask {
+  _id: string;
+  title: string;
+  description?: string;
+  status: string;
+  priority: string;
+  projectId: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const PRIORITY_CLR: Record<string, string> = { high: '#EF4444', medium: '#F59E0B', low: '#34D399' };
+const TASK_STATUS_CLR: Record<string, string> = { TODO: '#64748B', 'IN PROGRESS': '#22D3EE', 'IN REVIEW': '#818CF8', DONE: '#34D399' };
+const TASK_STATUSES = ['TODO', 'IN PROGRESS', 'IN REVIEW', 'DONE'];
+const TASK_PRIORITIES = ['high', 'medium', 'low'];
 
 function TasksSection() {
+  const [tasks, setTasks] = useState<AdminTask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [priorityFilter, setPriorityFilter] = useState('ALL');
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({ title: '', description: '', projectId: '', priority: 'medium', status: 'TODO' });
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [patchingId, setPatchingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const filtered = MOCK_TASKS.filter((t) => {
-    const ms = t.title.toLowerCase().includes(search.toLowerCase()) || t.project.toLowerCase().includes(search.toLowerCase());
-    const mp = priorityFilter === 'ALL' || t.priority === priorityFilter;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  const auth = `Bearer ${token}`;
+
+  const fetchTasks = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/tasks/admin', { headers: { Authorization: auth } });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch tasks');
+      setTasks(Array.isArray(data) ? data : []);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setLoading(false);
+    }
+  }, [auth]);
+
+  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+
+  const handleCreate = async () => {
+    if (!createForm.title.trim() || !createForm.projectId.trim()) {
+      setCreateError('Title and Project ID are required.');
+      return;
+    }
+    setCreateLoading(true); setCreateError('');
+    try {
+      const res = await fetch('/api/tasks/admin', {
+        method: 'POST',
+        headers: { Authorization: auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify(createForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.details || 'Failed to create task');
+      setTasks((prev) => [data, ...prev]);
+      setShowCreate(false);
+      setCreateForm({ title: '', description: '', projectId: '', priority: 'medium', status: 'TODO' });
+    } catch (e: unknown) {
+      setCreateError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const handlePatch = async (id: string, field: string, value: string) => {
+    setPatchingId(id);
+    try {
+      const res = await fetch(`/api/tasks/admin?id=${id}`, {
+        method: 'PATCH',
+        headers: { Authorization: auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value }),
+      });
+      const data = await res.json();
+      if (res.ok) setTasks((prev) => prev.map((t) => (t._id === id ? { ...t, ...data } : t)));
+    } finally {
+      setPatchingId(null);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this task?')) return;
+    setDeletingId(id);
+    try {
+      await fetch(`/api/tasks/admin?id=${id}`, { method: 'DELETE', headers: { Authorization: auth } });
+      setTasks((prev) => prev.filter((t) => t._id !== id));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const filtered = tasks.filter((t) => {
+    const ms = t.title.toLowerCase().includes(search.toLowerCase()) || t.projectId.toLowerCase().includes(search.toLowerCase());
     const mst = statusFilter === 'ALL' || t.status === statusFilter;
-    return ms && mp && mst;
+    const mp = priorityFilter === 'ALL' || t.priority === priorityFilter;
+    return ms && mst && mp;
   });
+
+  const fieldStyle = { width: '100%', padding: '9px 13px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', fontFamily: 'var(--font-body)', fontSize: '0.825rem', color: '#F1F5F9', outline: 'none' };
+  const labelStyle = { display: 'block' as const, fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.45)', marginBottom: '5px' };
 
   return (
     <div>
+      {/* Create modal */}
+      {showCreate && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: '#0F1020', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '2rem', width: '100%', maxWidth: '520px' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: '#F1F5F9', marginBottom: '1.5rem' }}>Create Task</h3>
+            {createError && <div style={{ padding: '8px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '4px', marginBottom: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#F87171' }}>{createError}</div>}
+
+            {[{ key: 'title', label: 'Title *' }, { key: 'description', label: 'Description' }, { key: 'projectId', label: 'Project ID *' }].map(({ key, label }) => (
+              <div key={key} style={{ marginBottom: '1.25rem' }}>
+                <label style={labelStyle}>{label}</label>
+                <input type="text" value={createForm[key as keyof typeof createForm]} onChange={(e) => setCreateForm((f) => ({ ...f, [key]: e.target.value }))} style={fieldStyle}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.5)')} onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')} />
+              </div>
+            ))}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <label style={labelStyle}>Priority</label>
+                <select value={createForm.priority} onChange={(e) => setCreateForm((f) => ({ ...f, priority: e.target.value }))} style={{ ...fieldStyle, colorScheme: 'dark' }}>
+                  {TASK_PRIORITIES.map((p) => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Status</label>
+                <select value={createForm.status} onChange={(e) => setCreateForm((f) => ({ ...f, status: e.target.value }))} style={{ ...fieldStyle, colorScheme: 'dark' }}>
+                  {TASK_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button onClick={handleCreate} disabled={createLoading} style={{ flex: 1, padding: '10px', background: '#F59E0B', border: 'none', borderRadius: '4px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.875rem', color: '#07080F', cursor: createLoading ? 'not-allowed' : 'pointer', opacity: createLoading ? 0.6 : 1 }}>{createLoading ? 'Creating…' : 'Create Task'}</button>
+              <button onClick={() => { setShowCreate(false); setCreateError(''); setCreateForm({ title: '', description: '', projectId: '', priority: 'medium', status: 'TODO' }); }} style={{ padding: '10px 18px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '4px', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <SectionHeader
         title="All Tasks"
-        subtitle={`${MOCK_TASKS.length} TOTAL · ${MOCK_TASKS.filter(t => t.status !== 'DONE').length} OPEN`}
+        subtitle={loading ? 'LOADING…' : `${tasks.length} TOTAL TASKS`}
+        action={
+          <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: '#F59E0B', border: 'none', borderRadius: '3px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.04em', color: '#07080F', cursor: 'pointer' }}>
+            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Task
+          </button>
+        }
       />
+
+      {error && <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '4px', marginBottom: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#F87171' }}>{error}</div>}
 
       {/* Toolbar */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
@@ -621,42 +806,80 @@ function TasksSection() {
           </svg>
           <input type="text" placeholder="Search tasks…" value={search} onChange={(e) => setSearch(e.target.value)}
             style={{ width: '100%', padding: '7px 11px 7px 32px', background: '#0A0B16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', fontFamily: 'var(--font-body)', fontSize: '0.825rem', color: '#F1F5F9', outline: 'none' }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.4)')}
-            onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')} />
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.4)')} onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')} />
         </div>
-        {[['Priority', ['ALL','HIGH','MEDIUM','LOW'], priorityFilter, setPriorityFilter], ['Status', ['ALL','TODO','IN PROGRESS','IN REVIEW','DONE'], statusFilter, setStatusFilter]].map(([label, opts, val, setter]: any) => (
-          <div key={label} style={{ display: 'flex', gap: '3px', background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '4px', padding: '2px' }}>
-            {opts.map((o: string) => (
-              <button key={o} onClick={() => setter(o)}
-                style={{ padding: '4px 9px', borderRadius: '3px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.07em', background: val === o ? 'rgba(245,158,11,0.15)' : 'transparent', color: val === o ? '#F59E0B' : 'rgba(255,255,255,0.35)', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
-                {o}
-              </button>
-            ))}
-          </div>
-        ))}
+
+        {/* Status filter */}
+        <div style={{ display: 'flex', gap: '3px', background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '4px', padding: '2px' }}>
+          {['ALL', ...TASK_STATUSES].map((s) => (
+            <button key={s} onClick={() => setStatusFilter(s)} style={{ padding: '4px 9px', borderRadius: '3px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.07em', background: statusFilter === s ? 'rgba(245,158,11,0.15)' : 'transparent', color: statusFilter === s ? '#F59E0B' : 'rgba(255,255,255,0.35)', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+              {s}
+            </button>
+          ))}
+        </div>
+
+        {/* Priority filter */}
+        <div style={{ display: 'flex', gap: '3px', background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '4px', padding: '2px' }}>
+          {['ALL', ...TASK_PRIORITIES].map((p) => (
+            <button key={p} onClick={() => setPriorityFilter(p)} style={{ padding: '4px 9px', borderRadius: '3px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.07em', background: priorityFilter === p ? 'rgba(245,158,11,0.15)' : 'transparent', color: priorityFilter === p ? '#F59E0B' : 'rgba(255,255,255,0.35)', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+              {p.toUpperCase()}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
       <div style={{ background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px 80px 110px 100px 120px 90px', gap: '0.75rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-          {['Task', 'Project', 'Who', 'Priority', 'Status', 'Created By', 'Due'].map((h) => (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 150px 130px 130px 120px', gap: '0.75rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+          {['Task', 'Priority', 'Status', 'Project ID', 'Created', 'Actions'].map((h) => (
             <span key={h} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>{h}</span>
           ))}
         </div>
-        {filtered.map((t, i) => (
-          <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '1fr 160px 80px 110px 100px 120px 90px', gap: '0.75rem', padding: '0.875rem 1.25rem', borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', transition: 'background 0.15s' }}
+
+        {loading && <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>LOADING TASKS…</div>}
+
+        {!loading && filtered.map((t, i) => (
+          <div key={t._id} style={{ display: 'grid', gridTemplateColumns: '1fr 130px 150px 130px 130px 120px', gap: '0.75rem', padding: '0.875rem 1.25rem', borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', transition: 'background 0.15s' }}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-            <div style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.85rem', color: t.status === 'DONE' ? 'rgba(255,255,255,0.3)' : '#F1F5F9', textDecoration: t.status === 'DONE' ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.project}</span>
-            <Avatar initials={t.assignee} size={26} />
-            <Badge text={t.priority} color={PRIORITY_COLOR[t.priority]} />
-            <Badge text={t.status} color={TASK_STATUS_COLOR[t.status]} />
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.createdBy}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>{t.due}</span>
+
+            {/* Title + description */}
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.875rem', color: t.status === 'DONE' ? 'rgba(255,255,255,0.3)' : '#F1F5F9', textDecoration: t.status === 'DONE' ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
+              {t.description && <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'rgba(255,255,255,0.28)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '1px' }}>{t.description}</div>}
+            </div>
+
+            {/* Priority inline select */}
+            <select value={t.priority} disabled={patchingId === t._id} onChange={(e) => handlePatch(t._id, 'priority', e.target.value)}
+              style={{ background: `${PRIORITY_CLR[t.priority] ?? '#94A3B8'}18`, border: `1px solid ${PRIORITY_CLR[t.priority] ?? '#94A3B8'}40`, borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.06em', color: PRIORITY_CLR[t.priority] ?? '#94A3B8', padding: '3px 6px', cursor: 'pointer', outline: 'none', colorScheme: 'dark' }}>
+              {TASK_PRIORITIES.map((p) => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+            </select>
+
+            {/* Status inline select */}
+            <select value={t.status} disabled={patchingId === t._id} onChange={(e) => handlePatch(t._id, 'status', e.target.value)}
+              style={{ background: `${TASK_STATUS_CLR[t.status] ?? '#94A3B8'}18`, border: `1px solid ${TASK_STATUS_CLR[t.status] ?? '#94A3B8'}40`, borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.06em', color: TASK_STATUS_CLR[t.status] ?? '#94A3B8', padding: '3px 6px', cursor: 'pointer', outline: 'none', colorScheme: 'dark' }}>
+              {TASK_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+
+            {/* Project ID (truncated) */}
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'rgba(255,255,255,0.32)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.projectId}</span>
+
+            {/* Created date */}
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'rgba(255,255,255,0.32)' }}>
+              {new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+
+            {/* Delete */}
+            <button onClick={() => handleDelete(t._id)} disabled={deletingId === t._id}
+              style={{ padding: '4px 10px', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.06em', color: '#F87171', cursor: deletingId === t._id ? 'not-allowed' : 'pointer', opacity: deletingId === t._id ? 0.5 : 1, transition: 'all 0.15s' }}
+              onMouseEnter={(e) => { if (deletingId !== t._id) { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.7)'; e.currentTarget.style.color = '#EF4444'; } }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; e.currentTarget.style.color = '#F87171'; }}>
+              {deletingId === t._id ? '…' : 'DEL'}
+            </button>
           </div>
         ))}
-        {filtered.length === 0 && (
+
+        {!loading && filtered.length === 0 && (
           <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>NO TASKS FOUND</div>
         )}
       </div>
@@ -664,92 +887,6 @@ function TasksSection() {
   );
 }
 
-// ─── Section: System ──────────────────────────────────────────────────────────
-
-function SystemSection() {
-  const services = [
-    { name: 'auth-service',      port: 4001, status: 'HEALTHY', uptime: '99.98%', latency: '32ms',  requests: '12.4k', errors: '0.01%', version: 'v1.4.2' },
-    { name: 'projects-service',  port: 4002, status: 'HEALTHY', uptime: '99.95%', latency: '48ms',  requests: '8.1k',  errors: '0.00%', version: 'v1.2.1' },
-    { name: 'tasks-service',     port: 4003, status: 'HEALTHY', uptime: '99.99%', latency: '41ms',  requests: '31.7k', errors: '0.02%', version: 'v1.6.0' },
-    { name: 'analytics-service', port: 4004, status: 'HEALTHY', uptime: '99.91%', latency: '96ms',  requests: '4.2k',  errors: '0.04%', version: 'v1.1.3' },
-    { name: 'frontend-service',  port: 3000, status: 'HEALTHY', uptime: '100%',   latency: '11ms',  requests: '55.2k', errors: '0.00%', version: 'v1.5.0' },
-  ];
-
-  const env = [
-    { key: 'NODE_ENV',                    value: 'production' },
-    { key: 'AUTH_SERVICE_URL',            value: 'http://auth-service:4001' },
-    { key: 'PROJECTS_SERVICE_URL',        value: 'http://projects-service:4002' },
-    { key: 'TASKS_SERVICE_URL',           value: 'http://tasks-service:4003' },
-    { key: 'ANALYTICS_SERVICE_URL',       value: 'http://analytics-service:4004' },
-    { key: 'JWT_EXPIRY',                  value: '15m' },
-    { key: 'REFRESH_TOKEN_EXPIRY',        value: '7d' },
-    { key: 'LOG_LEVEL',                   value: 'info' },
-  ];
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <SectionHeader title="System Health" subtitle="LIVE SERVICE MONITORING · 5 SERVICES" />
-
-      {/* Services table */}
-      <div style={{ background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px 80px 90px 80px 80px 80px', gap: '0.75rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-          {['Service', 'Port', 'Status', 'Uptime', 'P99 Latency', 'Requests', 'Errors', 'Version'].map((h) => (
-            <span key={h} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>{h}</span>
-          ))}
-        </div>
-        {services.map((svc, i) => (
-          <div key={svc.name} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px 80px 90px 80px 80px 80px', gap: '0.75rem', padding: '0.875rem 1.25rem', borderBottom: i < services.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34D399', boxShadow: '0 0 6px rgba(52,211,153,0.6)', animation: 'pulse 2s ease-in-out infinite', flexShrink: 0 }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#F1F5F9' }}>{svc.name}</span>
-            </div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>:{svc.port}</span>
-            <Badge text={svc.status} color="#34D399" />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#34D399' }}>{svc.uptime}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)' }}>{svc.latency}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)' }}>{svc.requests}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: parseFloat(svc.errors) > 0.03 ? '#F59E0B' : '#34D399' }}>{svc.errors}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)' }}>{svc.version}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* ALB + env side by side */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        {/* ALB info */}
-        <div style={{ background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', padding: '1.5rem' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: '1.25rem' }}>ALB Configuration</div>
-          {[
-            { label: 'Load Balancer', value: 'nexus-alb.us-east-1.amazonaws.com' },
-            { label: 'Routing Rule', value: '/ → frontend-service:3000' },
-            { label: 'API Gateway', value: '/api/* → backend services' },
-            { label: 'Health Check', value: '/health (interval: 30s)' },
-            { label: 'SSL', value: 'ACM Certificate · TLS 1.3' },
-            { label: 'Region', value: 'us-east-1 (primary)' },
-          ].map((row) => (
-            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.625rem', marginBottom: '0.625rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>{row.label}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#F59E0B' }}>{row.value}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Environment variables */}
-        <div style={{ background: '#0A0B16', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', padding: '1.5rem' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: '1.25rem' }}>Environment Variables</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {env.map((e) => (
-              <div key={e.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: '3px', gap: '1rem' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.04em', flexShrink: 0 }}>{e.key}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: '#22D3EE', letterSpacing: '0.04em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right' }}>{e.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Admin Sidebar + Layout ───────────────────────────────────────────────────
 
@@ -758,16 +895,10 @@ const ADMIN_NAV: { key: AdminSection; label: string; icon: React.ReactNode }[] =
   { key: 'users',    label: 'Users',    icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
   { key: 'projects', label: 'Projects', icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> },
   { key: 'tasks',    label: 'Tasks',    icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> },
-  { key: 'system',   label: 'System',   icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
 ];
 
-const SECTION_COUNTS: Record<AdminSection, number | null> = {
-  overview: null,
-  users: MOCK_USERS.length,
-  projects: MOCK_PROJECTS.length,
-  tasks: MOCK_TASKS.length,
-  system: 5,
-};
+const SECTION_COUNTS: Partial<Record<AdminSection, number>> = {};
+
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -781,7 +912,6 @@ export default function AdminDashboardPage() {
       case 'users':    return <UsersSection />;
       case 'projects': return <ProjectsSection />;
       case 'tasks':    return <TasksSection />;
-      case 'system':   return <SystemSection />;
     }
   };
 

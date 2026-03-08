@@ -3,23 +3,110 @@
 import Link from 'next/link';
 
 const STATS = [
-  { value: '10k+', label: 'Active Projects' },
-  { value: '250k+', label: 'Tasks Managed' },
-  { value: '98.7%', label: 'Customer Satisfaction' },
+  { value: '10k+',   label: 'Active Projects' },
+  { value: '250k+',  label: 'Tasks Managed' },
+  { value: '98.7%',  label: 'Customer Satisfaction' },
   { value: '< 100ms', label: 'Avg API Response' },
 ];
 
 export default function StatsSection() {
   return (
     <>
-      {/* Stats strip */}
+      <style>{`
+        /* ── Design tokens ── */
+        :root {
+          --color-bg-primary:    #07080f;
+          --color-bg-secondary:  #0d0f1a;
+          --color-text-primary:  #f0f2ff;
+          --color-text-secondary:#a0a8c8;
+          --color-text-muted:    #5a6280;
+          --color-accent-cyan:   #22d3ee;
+          --color-dark-base:     #07080f;
+        }
+
+        /* ── Stat value gradient text ── */
+        .stats-value {
+          font-weight: 800;
+          font-size: 2.5rem;
+          letter-spacing: -0.03em;
+          line-height: 1;
+          margin-bottom: 0.5rem;
+          background: linear-gradient(135deg, #F1F5F9 40%, #22D3EE);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .stats-label {
+          font-family: monospace;
+          font-size: 0.72rem;
+          color: var(--color-text-muted);
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        /* ── CTA section tag ── */
+        .cta-tag {
+          display: inline-block;
+          font-family: monospace;
+          font-size: 0.7rem;
+          font-weight: 500;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--color-accent-cyan);
+          background: rgba(34, 211, 238, 0.08);
+          border: 1px solid rgba(34, 211, 238, 0.2);
+          padding: 0.3rem 0.75rem;
+          border-radius: 2px;
+          margin-bottom: 1.5rem;
+        }
+
+        /* ── Primary CTA button ── */
+        .cta-btn-primary {
+          font-weight: 700;
+          font-size: 0.95rem;
+          letter-spacing: 0.06em;
+          color: var(--color-dark-base);
+          background: var(--color-accent-cyan);
+          text-decoration: none;
+          padding: 14px 2.25rem;
+          border-radius: 2px;
+          display: inline-block;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .cta-btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 36px rgba(34, 211, 238, 0.3);
+        }
+
+        /* ── Secondary CTA button ── */
+        .cta-btn-secondary {
+          font-weight: 600;
+          font-size: 0.95rem;
+          letter-spacing: 0.05em;
+          color: var(--color-text-secondary);
+          background: transparent;
+          text-decoration: none;
+          padding: 14px 2.25rem;
+          border-radius: 2px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          display: inline-block;
+          transition: color 0.2s ease, border-color 0.2s ease;
+        }
+        .cta-btn-secondary:hover {
+          color: var(--color-text-primary);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+      `}</style>
+
+      {/* ── Stats strip ── */}
       <section
         id="analytics"
         style={{
           padding: '5rem 2rem',
           borderTop: '1px solid rgba(255,255,255,0.05)',
           borderBottom: '1px solid rgba(255,255,255,0.05)',
-          background: 'var(--bg-secondary)',
+          background: 'var(--color-bg-secondary)',
         }}
       >
         <div
@@ -27,9 +114,9 @@ export default function StatsSection() {
             maxWidth: '1280px',
             margin: '0 auto',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '2rem',
             textAlign: 'center',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
           }}
         >
           {STATS.map((stat, i) => (
@@ -40,55 +127,32 @@ export default function StatsSection() {
                 borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
               }}
             >
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 800,
-                  fontSize: '2.5rem',
-                  letterSpacing: '-0.03em',
-                  background: 'linear-gradient(135deg, var(--text-primary) 40%, var(--accent-cyan))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  lineHeight: 1,
-                  marginBottom: '0.5rem',
-                }}
-              >
-                {stat.value}
-              </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.72rem',
-                  color: 'var(--text-muted)',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {stat.label}
-              </div>
+              <div className="stats-value">{stat.value}</div>
+              <div className="stats-label">{stat.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* CTA section */}
+      {/* ── CTA section ── */}
       <section
         style={{
           padding: '7rem 2rem',
           position: 'relative',
           overflow: 'hidden',
+          background: 'var(--color-bg-primary)',
         }}
       >
+        {/* Radial glow */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            background:
-              'radial-gradient(ellipse at 50% 50%, rgba(34,211,238,0.07) 0%, transparent 65%)',
             pointerEvents: 'none',
+            background: 'radial-gradient(ellipse at 50% 50%, rgba(34,211,238,0.07) 0%, transparent 65%)',
           }}
         />
+
         <div
           style={{
             maxWidth: '720px',
@@ -98,31 +162,26 @@ export default function StatsSection() {
             zIndex: 1,
           }}
         >
-          <span className="tag" style={{ marginBottom: '1.5rem', display: 'inline-block' }}>
-            Get Started
-          </span>
+          <span className="cta-tag">Get Started</span>
+
           <h2
             style={{
-              fontFamily: 'var(--font-display)',
               fontWeight: 800,
-              fontSize: 'clamp(2rem, 4vw, 3.2rem)',
               letterSpacing: '-0.02em',
-              color: 'var(--text-primary)',
+              color: 'var(--color-text-primary)',
               lineHeight: 1.1,
               marginBottom: '1.25rem',
+              fontSize: 'clamp(2rem, 4vw, 3.2rem)',
             }}
           >
-            Ready to ship
-            <br />
-            faster?
+            Ready to ship<br />faster?
           </h2>
+
           <p
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '1rem',
-              color: 'var(--text-secondary)',
+              color: 'var(--color-text-secondary)',
               lineHeight: 1.7,
-              marginBottom: '2.5rem',
               maxWidth: '480px',
               margin: '0 auto 2.5rem',
             }}
@@ -130,58 +189,12 @@ export default function StatsSection() {
             Deploy the full microservice stack in minutes. Your team will be managing
             projects and tracking tasks within the hour.
           </p>
+
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link
-              href="/signup"
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                letterSpacing: '0.06em',
-                color: '#07080F',
-                background: 'var(--accent-cyan)',
-                textDecoration: 'none',
-                padding: '14px 36px',
-                borderRadius: '3px',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                display: 'inline-block',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 12px 36px rgba(34,211,238,0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
+            <Link href="/signup" className="cta-btn-primary">
               Start Free Trial
             </Link>
-            <Link
-              href="/docs"
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 600,
-                fontSize: '0.95rem',
-                letterSpacing: '0.05em',
-                color: 'var(--text-secondary)',
-                background: 'transparent',
-                textDecoration: 'none',
-                padding: '14px 36px',
-                borderRadius: '3px',
-                border: '1px solid rgba(255,255,255,0.12)',
-                transition: 'color 0.2s, border-color 0.2s',
-                display: 'inline-block',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--text-primary)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--text-secondary)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
-              }}
-            >
+            <Link href="/docs" className="cta-btn-secondary">
               View Docs
             </Link>
           </div>
