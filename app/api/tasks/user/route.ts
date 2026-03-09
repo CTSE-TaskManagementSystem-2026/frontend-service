@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const TASK_SERVICE_BASE = process.env.TASK_SERVICE_URL ?? 'http://tasks-service.internal.local';
+const TASK_SERVICE_BASE = 'http://tasks-service.internal.local';
 
 /**
  * User proxy: forward task requests to task-lifecycle-service with user's JWT.

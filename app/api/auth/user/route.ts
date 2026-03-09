@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         }
 
         return NextResponse.json(data, { status: 200 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Get users proxy error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json(data, { status: 201 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Create user proxy error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
@@ -106,7 +106,7 @@ export async function PUT(request: NextRequest) {
         }
 
         return NextResponse.json(data, { status: 200 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Update user proxy error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
@@ -142,7 +142,7 @@ export async function DELETE(request: NextRequest) {
         }
 
         return NextResponse.json(data, { status: 200 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Delete user proxy error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }

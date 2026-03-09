@@ -45,7 +45,7 @@ export default function CreateTaskPage() {
     setError(''); setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_TASKS_SERVICE_URL}/tasks`, {
+      const res = await fetch('/api/tasks/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...form, tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean) }),
