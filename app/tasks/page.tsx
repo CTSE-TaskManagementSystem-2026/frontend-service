@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
+import Link from 'next/link';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,48 +20,48 @@ interface Task {
 // ─── Color maps ───────────────────────────────────────────────────────────────
 
 const PRIORITY_COLOR: Record<string, string> = { high: '#EF4444', medium: '#F59E0B', low: '#34D399' };
-const STATUS_COLOR:   Record<string, string> = { TODO: '#64748B', 'IN PROGRESS': '#22D3EE', 'IN REVIEW': '#818CF8', DONE: '#34D399' };
+const STATUS_COLOR: Record<string, string> = { TODO: '#64748B', 'IN PROGRESS': '#22D3EE', 'IN REVIEW': '#818CF8', DONE: '#34D399' };
 const COL_ACCENT = STATUS_COLOR;
 const COLUMNS = ['TODO', 'IN PROGRESS', 'IN REVIEW', 'DONE'];
 
 // ─── Resolved design tokens ───────────────────────────────────────────────────
 const T = {
-  bgSecondary:  '#0d0f1a',
-  bgCard:       '#0f1020',
-  textPrimary:  '#f1f5f9',
-  textSecondary:'#94a3b8',
-  textMuted:    '#475569',
-  accentCyan:   '#22d3ee',
-  darkBase:     '#07080f',
-  border:       'rgba(255,255,255,0.07)',
-  fontDisplay:  "'Syne', sans-serif",
-  fontMono:     "'IBM Plex Mono', monospace",
-  fontBody:     "'Manrope', sans-serif",
+  bgSecondary: '#0d0f1a',
+  bgCard: '#0f1020',
+  textPrimary: '#f1f5f9',
+  textSecondary: '#94a3b8',
+  textMuted: '#475569',
+  accentCyan: '#22d3ee',
+  darkBase: '#07080f',
+  border: 'rgba(255,255,255,0.07)',
+  fontDisplay: "'Syne', sans-serif",
+  fontMono: "'IBM Plex Mono', monospace",
+  fontBody: "'Manrope', sans-serif",
 };
 
 type ViewMode = 'KANBAN' | 'LIST';
 
 export default function TasksPage() {
-  const [tasks, setTasks]               = useState<Task[]>([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState('');
-  const [view, setView]                 = useState<ViewMode>('KANBAN');
-  const [search, setSearch]             = useState('');
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [view, setView] = useState<ViewMode>('KANBAN');
+  const [search, setSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('ALL');
-  const [showCreate, setShowCreate]     = useState(false);
-  const [createForm, setCreateForm]     = useState({ title: '', description: '', projectId: '', priority: 'medium' });
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({ title: '', description: '', projectId: '', priority: 'medium' });
   const [createLoading, setCreateLoading] = useState(false);
-  const [createError, setCreateError]   = useState('');
-  const [patchingId, setPatchingId]     = useState<string | null>(null);
-  const [deletingId, setDeletingId]     = useState<string | null>(null);
+  const [createError, setCreateError] = useState('');
+  const [patchingId, setPatchingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
-  const auth  = `Bearer ${token}`;
+  const auth = `Bearer ${token}`;
 
   const fetchTasks = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res  = await fetch('/api/tasks/user', { headers: { Authorization: auth } });
+      const res = await fetch('/api/tasks/user', { headers: { Authorization: auth } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load tasks');
       setTasks(Array.isArray(data) ? data : []);
@@ -79,7 +80,7 @@ export default function TasksPage() {
     }
     setCreateLoading(true); setCreateError('');
     try {
-      const res  = await fetch('/api/tasks/user', {
+      const res = await fetch('/api/tasks/user', {
         method: 'POST',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...createForm, status: 'TODO' }),
@@ -99,7 +100,7 @@ export default function TasksPage() {
   const handleStatusChange = async (id: string, status: string) => {
     setPatchingId(id);
     try {
-      const res  = await fetch(`/api/tasks/user?id=${id}`, {
+      const res = await fetch(`/api/tasks/user?id=${id}`, {
         method: 'PATCH',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -144,15 +145,15 @@ export default function TasksPage() {
       title="My Tasks"
       subtitle="TASKMASTER / MY TASKS"
       actions={
-        <button
-          onClick={() => setShowCreate(true)}
+        <Link
+          href="/tasks/create"
           style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: T.accentCyan, border: 'none', borderRadius: '3px', fontFamily: T.fontDisplay, fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.04em', color: T.darkBase, cursor: 'pointer' }}
         >
           <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           New Task
-        </button>
+        </Link>
       }
     >
       {/* ── Create modal ── */}
@@ -168,9 +169,9 @@ export default function TasksPage() {
             )}
 
             {[
-              { key: 'title',       label: 'Title *',      placeholder: 'Task title' },
-              { key: 'description', label: 'Description',  placeholder: 'Optional description' },
-              { key: 'projectId',   label: 'Project ID *', placeholder: 'MongoDB _id of project' },
+              { key: 'title', label: 'Title *', placeholder: 'Task title' },
+              { key: 'description', label: 'Description', placeholder: 'Optional description' },
+              { key: 'projectId', label: 'Project ID *', placeholder: 'MongoDB _id of project' },
             ].map(({ key, label, placeholder }) => (
               <div key={key} style={{ marginBottom: '1.25rem' }}>
                 <label style={labelStyle}>{label}</label>
@@ -180,8 +181,8 @@ export default function TasksPage() {
                   value={createForm[key as keyof typeof createForm]}
                   onChange={(e) => setCreateForm((f) => ({ ...f, [key]: e.target.value }))}
                   style={fieldStyle}
-                  onFocus={(e)  => (e.currentTarget.style.borderColor = 'rgba(34,211,238,0.4)')}
-                  onBlur={(e)   => (e.currentTarget.style.borderColor = T.border)}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(34,211,238,0.4)')}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = T.border)}
                 />
               </div>
             ))}
@@ -229,7 +230,7 @@ export default function TasksPage() {
         <div style={{ position: 'relative', flex: '1 1 200px', maxWidth: '300px' }}>
           <svg width="14" height="14" fill="none" stroke={T.textMuted} strokeWidth="2" viewBox="0 0 24 24"
             style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             type="text"
@@ -238,7 +239,7 @@ export default function TasksPage() {
             onChange={(e) => setSearch(e.target.value)}
             style={{ width: '100%', padding: '8px 12px 8px 36px', background: T.bgSecondary, border: `1px solid ${T.border}`, borderRadius: '4px', fontFamily: T.fontBody, fontSize: '0.875rem', color: T.textPrimary, outline: 'none' }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(34,211,238,0.4)')}
-            onBlur={(e)  => (e.currentTarget.style.borderColor = T.border)}
+            onBlur={(e) => (e.currentTarget.style.borderColor = T.border)}
           />
         </div>
 

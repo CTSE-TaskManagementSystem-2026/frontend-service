@@ -11,9 +11,9 @@ interface Project {
 }
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  active:    { label: 'ACTIVE',    color: '#22D3EE' },
-  inactive:  { label: 'INACTIVE',  color: '#64748B' },
-  archived:  { label: 'ARCHIVED',  color: '#F59E0B' },
+  active: { label: 'ACTIVE', color: '#22D3EE' },
+  inactive: { label: 'INACTIVE', color: '#64748B' },
+  archived: { label: 'ARCHIVED', color: '#F59E0B' },
   completed: { label: 'COMPLETED', color: '#34D399' },
 };
 const PALETTE = ['#22D3EE', '#F59E0B', '#818CF8', '#34D399', '#F87171', '#A78BFA', '#FB923C'];
@@ -35,10 +35,10 @@ function timeAgo(iso: string): string {
 
 type Filter = 'ALL' | 'active' | 'inactive' | 'archived' | 'completed';
 const FILTER_LABELS: { value: Filter; label: string }[] = [
-  { value: 'ALL',       label: 'ALL'       },
-  { value: 'active',    label: 'ACTIVE'    },
-  { value: 'inactive',  label: 'INACTIVE'  },
-  { value: 'archived',  label: 'ARCHIVED'  },
+  { value: 'ALL', label: 'ALL' },
+  { value: 'active', label: 'ACTIVE' },
+  { value: 'inactive', label: 'INACTIVE' },
+  { value: 'archived', label: 'ARCHIVED' },
   { value: 'completed', label: 'COMPLETED' },
 ];
 
@@ -53,7 +53,9 @@ export default function ProjectsPage() {
   const fetchProjects = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch('/api/projects/user', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/api/projects/user', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to fetch projects');
       setProjects(Array.isArray(data.projects) ? data.projects : []);
@@ -215,7 +217,7 @@ export default function ProjectsPage() {
         subtitle="TASKMASTER / MY PROJECTS"
         actions={
           <Link href="/projects/create" className="proj-new-btn">
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
             New Project
           </Link>
         }
@@ -227,7 +229,7 @@ export default function ProjectsPage() {
           <div style={{ position: 'relative', flex: 1, minWidth: '220px', maxWidth: '320px' }}>
             <svg width="14" height="14" fill="none" stroke="#475569" strokeWidth="2" viewBox="0 0 24 24"
               style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input type="text" placeholder="Search projects…" value={search} onChange={(e) => setSearch(e.target.value)} className="proj-search" />
           </div>
@@ -294,7 +296,7 @@ export default function ProjectsPage() {
                         {project.dueDate ? (
                           <>
                             <svg width="11" height="11" fill="none" stroke={isOverdue ? '#EF4444' : '#475569'} strokeWidth="1.8" viewBox="0 0 24 24">
-                              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                              <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                             </svg>
                             <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem', color: isOverdue ? '#EF4444' : '#475569' }}>
                               {new Date(project.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

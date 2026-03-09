@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import DashboardLayout from '../../components/DashboardLayout';
 
 const COLORS = ['#22D3EE', '#818CF8', '#F59E0B', '#34D399', '#F87171', '#A78BFA', '#FB923C', '#38BDF8'];
-const STATUSES = ['ACTIVE', 'PLANNED', 'IN REVIEW', 'ON HOLD'];
+const STATUSES = ['active', 'inactive', 'archived', 'completed'];
 
 const labelCls = 'create-label';
 const inputCls = 'create-input';
 
 export default function CreateProjectPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', description: '', status: 'ACTIVE', color: COLORS[0], dueDate: '', tags: '' });
+  const [form, setForm] = useState({ name: '', description: '', status: 'active', color: COLORS[0], dueDate: '', tags: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,7 +24,7 @@ export default function CreateProjectPage() {
     setError(''); setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_PROJECTS_SERVICE_URL}/projects`, {
+      const res = await fetch('/api/projects/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...form, tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean) }),

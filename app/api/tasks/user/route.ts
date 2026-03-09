@@ -2,25 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const TASK_SERVICE_BASE = process.env.TASK_SERVICE_URL ?? 'http://localhost:3003/api/tasks';
 
-/**
- * User proxy: forward task requests to task-lifecycle-service with user's JWT.
- * Task-service scopes results to createdBy = userId extracted from JWT.
- */
-
-// GET /api/tasks/user  — get user's own tasks
-// GET /api/tasks/user?projectId=<id>  — filter by project
 export async function GET(req: NextRequest) {
     const token = req.headers.get('authorization') ?? '';
-    const { searchParams } = req.nextUrl;
-    const projectId = searchParams.get('projectId');
+    const projectId = req.nextUrl.searchParams.get('projectId');
 
-    const url = new URL(`${TASK_SERVICE_BASE}/api/tasks`);
+    const url = new URL(TASK_SERVICE_BASE);
     if (projectId) url.searchParams.set('projectId', projectId);
 
     try {
-        const res = await fetch(url.toString(), {
-            headers: { Authorization: token },
-        });
+        const res = await fetch(url.toString(), { headers: { Authorization: token } });
         const data = await res.json();
         return NextResponse.json(data, { status: res.status });
     } catch (err) {
@@ -28,13 +18,12 @@ export async function GET(req: NextRequest) {
     }
 }
 
-// POST /api/tasks/user  — create a task (createdBy set from JWT in task-service)
 export async function POST(req: NextRequest) {
     const token = req.headers.get('authorization') ?? '';
     const body = await req.json().catch(() => ({}));
 
     try {
-        const res = await fetch(`${TASK_SERVICE_BASE}/api/tasks`, {
+        const res = await fetch(TASK_SERVICE_BASE, {
             method: 'POST',
             headers: { Authorization: token, 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -46,7 +35,6 @@ export async function POST(req: NextRequest) {
     }
 }
 
-// PATCH /api/tasks/user?id=<id>  — update own task
 export async function PATCH(req: NextRequest) {
     const token = req.headers.get('authorization') ?? '';
     const id = req.nextUrl.searchParams.get('id');
@@ -55,7 +43,7 @@ export async function PATCH(req: NextRequest) {
     if (!id) return NextResponse.json({ error: '`id` query param required' }, { status: 400 });
 
     try {
-        const res = await fetch(`${TASK_SERVICE_BASE}/api/tasks?id=${id}`, {
+        const res = await fetch(`${TASK_SERVICE_BASE}?id=${id}`, {   // ← fixed
             method: 'PATCH',
             headers: { Authorization: token, 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -67,7 +55,6 @@ export async function PATCH(req: NextRequest) {
     }
 }
 
-// DELETE /api/tasks/user?id=<id>  — delete own task
 export async function DELETE(req: NextRequest) {
     const token = req.headers.get('authorization') ?? '';
     const id = req.nextUrl.searchParams.get('id');
@@ -75,7 +62,7 @@ export async function DELETE(req: NextRequest) {
     if (!id) return NextResponse.json({ error: '`id` query param required' }, { status: 400 });
 
     try {
-        const res = await fetch(`${TASK_SERVICE_BASE}/api/tasks?id=${id}`, {
+        const res = await fetch(`${TASK_SERVICE_BASE}?id=${id}`, {
             method: 'DELETE',
             headers: { Authorization: token },
         });

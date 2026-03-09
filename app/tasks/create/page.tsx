@@ -1,39 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '../../components/DashboardLayout';
 
-const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+const PRIORITIES = ['low', 'medium', 'high'];
 const STATUSES = ['TODO', 'IN PROGRESS', 'IN REVIEW', 'DONE'];
-const MOCK_PROJECTS = [
-  { id: '1', name: 'Platform Redesign' },
-  { id: '2', name: 'Auth Service' },
-  { id: '3', name: 'Analytics Dashboard' },
-  { id: '4', name: 'Mobile App' },
-  { id: '5', name: 'DevOps Pipeline' },
-];
-const MOCK_MEMBERS = [
-  { id: 'jd', name: 'John Doe',   initials: 'JD' },
-  { id: 'as', name: 'Alice Smith', initials: 'AS' },
-  { id: 'mk', name: 'Mike Kim',   initials: 'MK' },
-  { id: 'sr', name: 'Sara Ren',   initials: 'SR' },
-];
 const PRIORITY_COLOR: Record<string, string> = {
-  LOW: '#34D399', MEDIUM: '#F59E0B', HIGH: '#EF4444', CRITICAL: '#A855F7',
+  low: '#34D399', medium: '#F59E0B', high: '#EF4444',
 };
 
 const labelCls = 'task-label';
 const inputCls = 'task-input';
 
+interface Project { _id: string; name: string; }
+
 export default function CreateTaskPage() {
   const router = useRouter();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projLoading, setProjLoading] = useState(true);
   const [form, setForm] = useState({
-    title: '', description: '', projectId: '', priority: 'MEDIUM',
-    status: 'TODO', assigneeId: '', dueDate: '', tags: '',
+    title: '', description: '', projectId: '',
+    priority: 'medium', status: 'TODO', dueDate: '', tags: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // ── Fetch real projects on mount ──
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch('/api/projects/user', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => setProjects(Array.isArray(data.projects) ? data.projects : []))
+      .catch(() => setError('Failed to load projects'))
+      .finally(() => setProjLoading(false));
+  }, []);
 
   const update = (field: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -41,16 +45,23 @@ export default function CreateTaskPage() {
 
   const handleSubmit = async () => {
     if (!form.title.trim()) { setError('Task title is required.'); return; }
-    if (!form.projectId)    { setError('Please select a project.'); return; }
+    if (!form.projectId) { setError('Please select a project.'); return; }
     setError(''); setLoading(true);
     try {
       const token = localStorage.getItem('token');
       const res = await fetch('/api/tasks/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ ...form, tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean) }),
+        body: JSON.stringify({
+          title: form.title,
+          description: form.description,
+          projectId: form.projectId,
+          priority: form.priority,
+          status: form.status,
+        }),
       });
-      if (!res.ok) throw new Error('Failed to create task');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.details || 'Failed to create task');
       router.push('/tasks');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error');
@@ -258,36 +269,35 @@ export default function CreateTaskPage() {
             </div>
 
             {/* Project */}
-            <div>
-              <label className={labelCls}>
-                Project <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <select value={form.projectId} onChange={update('projectId')} className={inputCls} style={{ cursor: 'pointer' }}>
-                <option value="" style={{ background: '#0D0E1A' }}>Select a project…</option>
-                {MOCK_PROJECTS.map((p) => (
-                  <option key={p.id} value={p.id} style={{ background: '#0D0E1A' }}>{p.name}</option>
-                ))}
-              </select>
-            </div>
+            <select value={form.projectId} onChange={update('projectId')} className={inputCls} style={{ cursor: 'pointer' }}>
+              <option value="" style={{ background: '#0D0E1A' }}>
+                {projLoading ? 'Loading projects…' : 'Select a project…'}
+              </option>
+              {projects.map((p) => (
+                <option key={p._id} value={p._id} style={{ background: '#0D0E1A' }}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
 
             {/* Priority + Status */}
             <div className="task-grid-2">
               <div>
                 <label className={labelCls}>Priority</label>
                 <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
-                  {PRIORITIES.map((p) => (
+                  {['low', 'medium', 'high'].map((p) => (
                     <button
                       key={p}
                       onClick={() => setForm((f) => ({ ...f, priority: p }))}
                       className="task-priority-btn"
                       style={{
-                        borderColor:  form.priority === p ? PRIORITY_COLOR[p] : 'rgba(255,255,255,0.08)',
-                        background:   form.priority === p ? `${PRIORITY_COLOR[p]}18` : 'transparent',
-                        color:        form.priority === p ? PRIORITY_COLOR[p] : '#475569',
+                        borderColor: form.priority === p ? PRIORITY_COLOR[p] : 'rgba(255,255,255,0.08)',
+                        background: form.priority === p ? `${PRIORITY_COLOR[p]}18` : 'transparent',
+                        color: form.priority === p ? PRIORITY_COLOR[p] : '#475569',
                         border: `1px solid ${form.priority === p ? PRIORITY_COLOR[p] : 'rgba(255,255,255,0.08)'}`,
                       }}
                     >
-                      {p}
+                      {p.toUpperCase()}
                     </button>
                   ))}
                 </div>
@@ -299,39 +309,6 @@ export default function CreateTaskPage() {
                     <option key={s} value={s} style={{ background: '#0D0E1A' }}>{s}</option>
                   ))}
                 </select>
-              </div>
-            </div>
-
-            {/* Assignee + Due date */}
-            <div className="task-grid-2">
-              <div>
-                <label className={labelCls}>Assignee</label>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {MOCK_MEMBERS.map((m) => (
-                    <button
-                      key={m.id}
-                      title={m.name}
-                      onClick={() => setForm((f) => ({ ...f, assigneeId: f.assigneeId === m.id ? '' : m.id }))}
-                      className="task-avatar-btn"
-                      style={{
-                        background:   form.assigneeId === m.id ? 'linear-gradient(135deg, #22D3EE, #818CF8)' : 'rgba(255,255,255,0.07)',
-                        borderColor:  form.assigneeId === m.id ? 'rgba(34,211,238,0.6)' : 'rgba(255,255,255,0.1)',
-                        color:        form.assigneeId === m.id ? '#07080F' : '#94A3B8',
-                      }}
-                    >
-                      {m.initials}
-                    </button>
-                  ))}
-                </div>
-                {form.assigneeId && (
-                  <div className="task-assignee-name">
-                    {MOCK_MEMBERS.find((m) => m.id === form.assigneeId)?.name}
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className={labelCls}>Due Date</label>
-                <input type="date" value={form.dueDate} onChange={update('dueDate')} className={`${inputCls} task-date`} />
               </div>
             </div>
 

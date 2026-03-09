@@ -70,7 +70,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(data, { status: 201 });
     } catch (err) {
         console.error('[user/projects] POST error:', err);
-        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({
+            message: 'Internal server error',
+            details: String(err)  // ← add this temporarily
+        }, { status: 500 });
     }
 }
 
