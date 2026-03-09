@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
     const projectId = searchParams.get('projectId');
 
-    const url = new URL(`${TASK_SERVICE_BASE}/api/tasks`);
+    const url = new URL(`${TASK_SERVICE_BASE}`);
     if (projectId) url.searchParams.set('projectId', projectId);
 
     try {
@@ -75,7 +75,7 @@ export async function DELETE(req: NextRequest) {
     if (!id) return NextResponse.json({ error: '`id` query param required' }, { status: 400 });
 
     try {
-        const res = await fetch(`${TASK_SERVICE_BASE}/api/tasks?id=${id}`, {
+        const res = await fetch(`${TASK_SERVICE_BASE}?id=${id}`, {
             method: 'DELETE',
             headers: { Authorization: token },
         });

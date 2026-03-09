@@ -33,44 +33,6 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// ──────────────────────────────────────────────
-// POST /api/auth/user
-// Create a new user (admin only)  →  POST http://auth-service.internal.local/api/auth/admin/create
-// ──────────────────────────────────────────────
-export async function POST(request: NextRequest) {
-    try {
-        const authHeader = request.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ message: 'Authorization token required' }, { status: 401 });
-        }
-
-        const body = await request.json();
-        const { name, email, password } = body;
-
-        if (!name || !email || !password) {
-            return NextResponse.json({ message: 'Please provide name, email, and password' }, { status: 400 });
-        }
-
-        const response = await fetch(`${AUTH_SERVICE_BASE}/admin/create`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: authHeader,
-            },
-            body: JSON.stringify({ name, email, password }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-            return NextResponse.json({ message: data.message || 'Failed to create user' }, { status: response.status });
-        }
-
-        return NextResponse.json(data, { status: 201 });
-    } catch (error: unknown) {
-        console.error('Create user proxy error:', error);
-        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
-    }
-}
 
 // ──────────────────────────────────────────────
 // PUT /api/auth/user
