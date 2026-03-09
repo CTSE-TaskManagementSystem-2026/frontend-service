@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const PROJECTS_SERVICE_BASE = 'http://projects-service.internal.local/api/projects';
+const PROJECTS_SERVICE_BASE = process.env.PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects';
 
 function authHeader(req: NextRequest) {
     return req.headers.get('authorization') ?? '';

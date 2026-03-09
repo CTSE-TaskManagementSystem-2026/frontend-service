@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const TASK_SERVICE_BASE = process.env.TASK_SERVICE_URL ?? 'http://tasks-service.internal.local';
+const TASK_SERVICE_BASE = process.env.TASK_SERVICE_URL ?? 'http://localhost:3003/api/tasks';
 
 /**
  * Admin proxy: forward all task requests to task-lifecycle-service.

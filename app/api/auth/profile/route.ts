@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const AUTH_SERVICE_BASE = 'http://auth-service.internal.local/api/auth';
+const AUTH_SERVICE_BASE = process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001/api/auth';
 
 // ──────────────────────────────────────────────
 // GET /api/auth/profile
