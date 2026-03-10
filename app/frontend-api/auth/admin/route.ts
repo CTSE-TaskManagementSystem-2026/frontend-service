@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Server-side only — safe to use in ECS Task Definition env vars & .env.local
 // Never exposed to the browser (no NEXT_PUBLIC_ prefix needed)
-const AUTH_SERVICE_URL =
-    process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001/api/auth';
+const AUTH_SERVICE_URL = 'http://auth-service.internal.local/api/auth';
 
 // ── GET /frontend-api/auth/admin  →  GET auth-service/users ────────────────
 // Fetches the full list of users (admin only)

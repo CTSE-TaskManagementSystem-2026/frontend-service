@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Server-side only — safe to use in ECS Task Definition env vars & .env.local
 // Never exposed to the browser (no NEXT_PUBLIC_ prefix needed)
-const TASKS_SERVICE_URL =
-    process.env.TASKS_SERVICE_URL ?? 'http://localhost:3003/api/tasks';
+const TASKS_SERVICE_URL = 'http://tasks-service.internal.local/api/tasks';
 
 // ── GET /frontend-api/tasks/user  →  GET tasks-service/ ────────────────────
 // Fetches all tasks for the authenticated user

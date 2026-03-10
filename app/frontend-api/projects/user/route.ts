@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Server-side only — safe to use in ECS Task Definition env vars & .env.local
 // Never exposed to the browser (no NEXT_PUBLIC_ prefix needed)
-const PROJECTS_SERVICE_URL =
-    process.env.PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects';
-
+const PROJECTS_SERVICE_URL = 'http://projects-service.internal.local/api/projects';
 // ── GET /frontend-api/projects/user  →  GET projects-service/ ──────────────
 // Fetches all projects belonging to the authenticated user
 export async function GET(req: NextRequest) {
