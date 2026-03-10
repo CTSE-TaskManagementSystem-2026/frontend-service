@@ -9,7 +9,7 @@ type Role = 'user' | 'admin';
 const labelCls = 'auth-label';
 const inputCls = 'auth-input';
 
-const AUTH_SERVICE_BASE = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ?? 'http://localhost:3001/api/auth';
+// All auth requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
 
 export default function LoginPage() {
   const [role, setRole] = useState<Role>('user');
@@ -22,7 +22,7 @@ export default function LoginPage() {
     if (!form.email || !form.password) { setError('Please fill in all fields.'); return; }
     setError(''); setLoading(true);
     try {
-      const res = await fetch(`${AUTH_SERVICE_BASE}/login`, {
+      const res = await fetch('/frontend-api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email, password: form.password }),

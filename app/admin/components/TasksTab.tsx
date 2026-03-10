@@ -28,7 +28,7 @@ const STATUS_STYLE: Record<string, { color: string }> = {
     'DONE': { color: '#34d399' },
 };
 
-const TASK_SERVICE_BASE = process.env.NEXT_PUBLIC_TASK_SERVICE_URL ?? 'http://localhost:3003/api/tasks';
+// All task requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
 
 export default function TasksTab({ token }: Props) {
     const auth = `Bearer ${token}`;
@@ -42,7 +42,7 @@ export default function TasksTab({ token }: Props) {
     const fetchTasks = useCallback(async () => {
         setLoading(true); setError('');
         try {
-            const res = await fetch(TASK_SERVICE_BASE, { headers: { Authorization: auth } });
+            const res = await fetch('/frontend-api/tasks/admin', { headers: { Authorization: auth } });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || data.message || 'Failed to fetch');
             setTasks(Array.isArray(data) ? data : []);
@@ -59,7 +59,7 @@ export default function TasksTab({ token }: Props) {
         if (!confirm(`Delete task "${title}"? This cannot be undone.`)) return;
         setDeletingId(id);
         try {
-            const res = await fetch(`${TASK_SERVICE_BASE}?id=${id}`, {
+            const res = await fetch(`/frontend-api/tasks/admin?id=${encodeURIComponent(id)}`, {
                 method: 'DELETE',
                 headers: { Authorization: auth },
             });

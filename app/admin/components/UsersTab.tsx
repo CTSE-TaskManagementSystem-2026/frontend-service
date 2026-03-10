@@ -12,7 +12,7 @@ interface User {
     createdAt: string;
 }
 
-const AUTH_SERVICE_BASE = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ?? 'http://localhost:3001/api/auth';
+// All auth requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
 
 export default function UsersTab({ token }: Props) {
     const auth = `Bearer ${token}`;
@@ -27,7 +27,7 @@ export default function UsersTab({ token }: Props) {
     const fetchUsers = useCallback(async () => {
         setLoading(true); setError('');
         try {
-            const res = await fetch(`${AUTH_SERVICE_BASE}/users`, {
+            const res = await fetch('/frontend-api/auth/admin', {
                 headers: { Authorization: auth },
             });
             const data = await res.json();
@@ -48,7 +48,7 @@ export default function UsersTab({ token }: Props) {
         if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
         setDeletingId(userId);
         try {
-            const res = await fetch(`${AUTH_SERVICE_BASE}/users/${userId}`, {
+            const res = await fetch(`/frontend-api/auth/admin?userId=${encodeURIComponent(userId)}`, {
                 method: 'DELETE',
                 headers: { Authorization: auth },
             });
@@ -70,7 +70,7 @@ export default function UsersTab({ token }: Props) {
         if (!confirm(`Change this user's role to "${newRole}"?`)) return;
         setUpdatingId(id);
         try {
-            const res = await fetch(`${AUTH_SERVICE_BASE}/users`, {
+            const res = await fetch('/frontend-api/auth/admin', {
                 method: 'PUT',
                 headers: {
                     Authorization: auth,

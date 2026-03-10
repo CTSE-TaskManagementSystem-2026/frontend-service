@@ -42,7 +42,7 @@ const FILTER_LABELS: { value: Filter; label: string }[] = [
   { value: 'completed', label: 'COMPLETED' },
 ];
 
-const PROJECTS_SERVICE_BASE = process.env.NEXT_PUBLIC_PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects';
+// All project requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -55,7 +55,7 @@ export default function ProjectsPage() {
   const fetchProjects = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch(PROJECTS_SERVICE_BASE, {
+      const res = await fetch('/frontend-api/projects/user', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -70,7 +70,7 @@ export default function ProjectsPage() {
     e.stopPropagation();
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
     try {
-      const res = await fetch(`${PROJECTS_SERVICE_BASE}?id=${id}`, {
+      const res = await fetch(`/frontend-api/projects/user?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

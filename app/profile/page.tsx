@@ -18,7 +18,7 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
-const AUTH_SERVICE_BASE = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ?? 'http://localhost:3001/api/auth';
+// All auth requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("Profile");
@@ -49,7 +49,7 @@ export default function ProfilePage() {
       setFetchLoading(false);
       return;
     }
-    fetch(`${AUTH_SERVICE_BASE}/profile`, {
+    fetch('/frontend-api/auth/users', {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -75,7 +75,7 @@ export default function ProfilePage() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(`${AUTH_SERVICE_BASE}/profile`, {  // ← direct
+      const res = await fetch('/frontend-api/auth/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: profile.name, email: profile.email, bio: profile.bio }),
@@ -108,7 +108,7 @@ export default function ProfilePage() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(`${AUTH_SERVICE_BASE}/profile`, {
+      const res = await fetch('/frontend-api/auth/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ currentPassword: passwords.current, newPassword: passwords.next }),

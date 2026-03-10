@@ -41,7 +41,7 @@ const T = {
 
 type ViewMode = 'KANBAN' | 'LIST';
 
-const TASK_SERVICE_BASE = process.env.NEXT_PUBLIC_TASK_SERVICE_URL ?? 'http://localhost:3003/api/tasks';
+// All task requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -63,7 +63,7 @@ export default function TasksPage() {
   const fetchTasks = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch(TASK_SERVICE_BASE, { headers: { Authorization: auth } });
+      const res = await fetch('/frontend-api/tasks/user', { headers: { Authorization: auth } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load tasks');
       setTasks(Array.isArray(data) ? data : []);
@@ -82,7 +82,7 @@ export default function TasksPage() {
     }
     setCreateLoading(true); setCreateError('');
     try {
-      const res = await fetch(TASK_SERVICE_BASE, {
+      const res = await fetch('/frontend-api/tasks/user', {
         method: 'POST',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...createForm, status: 'TODO' }),
@@ -102,7 +102,7 @@ export default function TasksPage() {
   const handleStatusChange = async (id: string, status: string) => {
     setPatchingId(id);
     try {
-      const res = await fetch(`${TASK_SERVICE_BASE}?id=${id}`, {
+      const res = await fetch(`/frontend-api/tasks/user?id=${encodeURIComponent(id)}`, {
         method: 'PATCH',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -118,7 +118,7 @@ export default function TasksPage() {
     if (!confirm('Delete this task?')) return;
     setDeletingId(id);
     try {
-      await fetch(`${TASK_SERVICE_BASE}?id=${id}`, {
+      await fetch(`/frontend-api/tasks/user?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: { Authorization: auth },
       });

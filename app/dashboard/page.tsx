@@ -64,8 +64,7 @@ const QUICK_ACTIONS = [
   { label: "All Tasks", href: "/tasks", icon: "☰" },
 ];
 
-const TASK_SERVICE_BASE = process.env.NEXT_PUBLIC_TASK_SERVICE_URL ?? 'http://localhost:3003/api/tasks';
-const PROJECTS_SERVICE_BASE = process.env.NEXT_PUBLIC_PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects';
+// All requests go through our own Next.js backend routes — no NEXT_PUBLIC_ needed
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -80,7 +79,7 @@ export default function DashboardPage() {
   const fetchProjects = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch(PROJECTS_SERVICE_BASE, {
+      const res = await fetch('/frontend-api/projects/user', {
         headers: { Authorization: auth },
       });
       const data = await res.json();
@@ -96,7 +95,7 @@ export default function DashboardPage() {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const res = await fetch(TASK_SERVICE_BASE, {
+      const res = await fetch('/frontend-api/tasks/user', {
         headers: { Authorization: auth },
       });
       if (res.ok) {

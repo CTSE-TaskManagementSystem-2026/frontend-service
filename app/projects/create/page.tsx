@@ -10,7 +10,7 @@ const STATUSES = ['active', 'inactive', 'archived', 'completed'];
 const labelCls = 'create-label';
 const inputCls = 'create-input';
 
-const PROJECTS_SERVICE_BASE = process.env.NEXT_PUBLIC_PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects';
+// All project requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
 
 export default function CreateProjectPage() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function CreateProjectPage() {
     setError(''); setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(PROJECTS_SERVICE_BASE, {
+      const res = await fetch('/frontend-api/projects/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...form, tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean) }),

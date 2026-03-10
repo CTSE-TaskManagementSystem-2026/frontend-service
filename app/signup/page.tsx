@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { NextResponse } from 'next/server';
+
 
 // Shared field classes resolved via scoped style block
 const labelCls = 'auth-label';
 const inputCls = 'auth-input';
 
-const AUTH_SERVICE_BASE = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ?? 'http://localhost:3001/api/auth';
+// All auth requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
 
 export default function SignupPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
@@ -25,7 +25,7 @@ export default function SignupPage() {
     if (form.password.length < 8) { setError('Password must be at least 8 characters.'); return; }
     setError(''); setLoading(true);
     try {
-      const res = await fetch(`${AUTH_SERVICE_BASE}/register`, {
+      const res = await fetch('/frontend-api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),

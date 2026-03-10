@@ -22,7 +22,7 @@ const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }
     completed: { color: '#818cf8', bg: 'rgba(129,140,248,0.08)', border: 'rgba(129,140,248,0.2)' },
 };
 
-const PROJECTS_SERVICE_BASE = process.env.NEXT_PUBLIC_PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects';
+// All project requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
 
 export default function ProjectsTab({ token }: Props) {
     const auth = `Bearer ${token}`;
@@ -35,7 +35,7 @@ export default function ProjectsTab({ token }: Props) {
     const fetchProjects = useCallback(async () => {
         setLoading(true); setError('');
         try {
-            const res = await fetch(PROJECTS_SERVICE_BASE, { headers: { Authorization: auth } });
+            const res = await fetch('/frontend-api/projects/admin', { headers: { Authorization: auth } });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || data.error || 'Failed to fetch');
             setProjects(Array.isArray(data.projects) ? data.projects : []);
@@ -52,7 +52,7 @@ export default function ProjectsTab({ token }: Props) {
         if (!confirm(`Delete project "${name}"? This cannot be undone.`)) return;
         setDeletingId(id);
         try {
-            const res = await fetch(`${PROJECTS_SERVICE_BASE}?id=${id}`, {
+            const res = await fetch(`/frontend-api/projects/admin?id=${encodeURIComponent(id)}`, {
                 method: 'DELETE',
                 headers: { Authorization: auth },
             });
