@@ -18,6 +18,8 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
+const AUTH_SERVICE_BASE = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ?? 'http://localhost:3001/api/auth';
+
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("Profile");
   const [profile, setProfile] = useState({
@@ -47,7 +49,8 @@ export default function ProfilePage() {
       setFetchLoading(false);
       return;
     }
-    fetch("/api/auth/profile", {
+    fetch(`${AUTH_SERVICE_BASE}/profile`, {
+      method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -68,26 +71,23 @@ export default function ProfilePage() {
   }, []);
 
   const handleSave = async () => {
-    setSaveError("");
-    const token = localStorage.getItem("token");
+    setSaveError('');
+    const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch("/api/auth/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch(`${AUTH_SERVICE_BASE}/profile`, {  // ← direct
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: profile.name, email: profile.email, bio: profile.bio }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Update failed");
-      localStorage.setItem("name", profile.name);
-      localStorage.setItem("email", profile.email);
+      if (!res.ok) throw new Error(data.message || 'Update failed');
+      localStorage.setItem('name', profile.name);
+      localStorage.setItem('email', profile.email);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : "Update failed");
+      setSaveError(err instanceof Error ? err.message : 'Update failed');
     }
   };
 
@@ -105,27 +105,21 @@ export default function ProfilePage() {
       setPwError("New password must be at least 8 characters.");
       return;
     }
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch("/api/auth/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          currentPassword: passwords.current,
-          newPassword: passwords.next,
-        }),
+      const res = await fetch(`${AUTH_SERVICE_BASE}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword: passwords.current, newPassword: passwords.next }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Password update failed");
-      setPasswords({ current: "", next: "", confirm: "" });
+      if (!res.ok) throw new Error(data.message || 'Password update failed');
+      setPasswords({ current: '', next: '', confirm: '' });
       setPwSaved(true);
       setTimeout(() => setPwSaved(false), 2500);
     } catch (err: unknown) {
-      setPwError(err instanceof Error ? err.message : "Error");
+      setPwError(err instanceof Error ? err.message : 'Error');
     }
   };
 

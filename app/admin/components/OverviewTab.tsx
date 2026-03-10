@@ -11,9 +11,10 @@ interface Summary {
     activeProjects: number;
 }
 
-const AUTH_API = '/api/auth/user';
-const PROJECTS_API = '/api/projects/admin';
-const TASKS_API = '/api/tasks/admin';
+const AUTH_SERVICE_BASE = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ?? 'http://localhost:3001/api/auth'
+const PROJECTS_SERVICE_BASE = process.env.NEXT_PUBLIC_PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects'
+const TASKS_SERVICE_BASE = process.env.NEXT_PUBLIC_TASK_SERVICE_URL ?? 'http://localhost:3003/api/tasks'
+
 
 export default function OverviewTab({ token }: Props) {
     const auth = `Bearer ${token}`;
@@ -25,9 +26,9 @@ export default function OverviewTab({ token }: Props) {
         async function load() {
             try {
                 const [usersRes, projRes, tasksRes] = await Promise.all([
-                    fetch(AUTH_API, { headers: { Authorization: auth } }),
-                    fetch(PROJECTS_API, { headers: { Authorization: auth } }),
-                    fetch(TASKS_API, { headers: { Authorization: auth } }),
+                    fetch(`${AUTH_SERVICE_BASE}/users`, { headers: { Authorization: auth } }),
+                    fetch(`${PROJECTS_SERVICE_BASE}`, { headers: { Authorization: auth } }),
+                    fetch(`${TASKS_SERVICE_BASE}`, { headers: { Authorization: auth } }),
                 ]);
 
                 const usersData = usersRes.ok ? await usersRes.json() : { users: [] };

@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { NextResponse } from 'next/server';
 
 // Shared field classes resolved via scoped style block
 const labelCls = 'auth-label';
 const inputCls = 'auth-input';
+
+const AUTH_SERVICE_BASE = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ?? 'http://localhost:3001/api/auth';
 
 export default function SignupPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
@@ -22,12 +25,16 @@ export default function SignupPage() {
     if (form.password.length < 8) { setError('Password must be at least 8 characters.'); return; }
     setError(''); setLoading(true);
     try {
-      const res = await fetch('/api/auth', {
+      const res = await fetch(`${AUTH_SERVICE_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'register', name: form.name, email: form.email, password: form.password }),
+        body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
       });
-      if (!res.ok) throw new Error((await res.json()).message || 'Registration failed');
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || 'Registration failed');
+        return;
+      }
       window.location.href = '/login';
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed');

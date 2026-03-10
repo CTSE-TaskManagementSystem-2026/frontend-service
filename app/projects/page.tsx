@@ -42,6 +42,8 @@ const FILTER_LABELS: { value: Filter; label: string }[] = [
   { value: 'completed', label: 'COMPLETED' },
 ];
 
+const PROJECTS_SERVICE_BASE = process.env.NEXT_PUBLIC_PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects';
+
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function ProjectsPage() {
   const fetchProjects = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch('/api/projects/user', {
+      const res = await fetch(PROJECTS_SERVICE_BASE, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -62,6 +64,26 @@ export default function ProjectsPage() {
     } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Error'); }
     finally { setLoading(false); }
   }, [token]);
+
+  const handleDelete = async (e: React.MouseEvent, id: string, name: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`${PROJECTS_SERVICE_BASE}?id=${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setProjects((prev) => prev.filter((p) => p._id !== id));
+      } else {
+        const data = await res.json();
+        setError(data.message || 'Failed to delete project');
+      }
+    } catch {
+      setError('Failed to delete project');
+    }
+  };
 
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
 
@@ -290,6 +312,7 @@ export default function ProjectsPage() {
                         <div style={{ height: '100%', borderRadius: '2px', transition: 'width 0.5s ease', width: `${Math.min((project.tasksCount / 20) * 100, 100)}%`, background: accent }} />
                       </div>
                     </div>
+
                     {/* Footer */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -306,6 +329,25 @@ export default function ProjectsPage() {
                       </div>
                       <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem', color: '#475569' }}>{timeAgo(project.updatedAt)}</span>
                     </div>
+
+                    <button
+                      onClick={(e) => handleDelete(e, project._id, project.name)}
+                      style={{
+                        padding: '3px 8px',
+                        background: 'transparent',
+                        border: '1px solid rgba(239,68,68,0.25)',
+                        borderRadius: '2px',
+                        fontFamily: 'IBM Plex Mono, monospace',
+                        fontSize: '0.6rem',
+                        letterSpacing: '0.06em',
+                        color: '#ef4444',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      DELETE
+                    </button>
                   </div>
                 </Link>
               );

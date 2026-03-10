@@ -50,10 +50,10 @@ const TASK_STATUS_CLR: Record<string, string> = {
 function formatDate(iso?: string) {
   return iso
     ? new Date(iso).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
     : "—";
 }
 
@@ -63,6 +63,9 @@ const QUICK_ACTIONS = [
   { label: "View Projects", href: "/projects", icon: "⊞" },
   { label: "All Tasks", href: "/tasks", icon: "☰" },
 ];
+
+const TASK_SERVICE_BASE = process.env.NEXT_PUBLIC_TASK_SERVICE_URL ?? 'http://localhost:3003/api/tasks';
+const PROJECTS_SERVICE_BASE = process.env.NEXT_PUBLIC_PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects';
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -75,18 +78,17 @@ export default function DashboardPage() {
   const auth = `Bearer ${token}`;
 
   const fetchProjects = useCallback(async () => {
-    setLoading(true);
-    setError("");
+    setLoading(true); setError('');
     try {
-      const res = await fetch("/api/projects/user", {
+      const res = await fetch(PROJECTS_SERVICE_BASE, {
         headers: { Authorization: auth },
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to fetch projects");
+      if (!res.ok) throw new Error(data.message || 'Failed to fetch projects');
       setProjects(Array.isArray(data.projects) ? data.projects : []);
       if (data.summary) setSummary(data.summary);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setLoading(false);
     }
@@ -94,7 +96,7 @@ export default function DashboardPage() {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const res = await fetch("/api/tasks/user", {
+      const res = await fetch(TASK_SERVICE_BASE, {
         headers: { Authorization: auth },
       });
       if (res.ok) {
@@ -105,7 +107,6 @@ export default function DashboardPage() {
       /* non-fatal */
     }
   }, [auth]);
-
   useEffect(() => {
     fetchProjects();
     fetchTasks();

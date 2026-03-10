@@ -41,6 +41,8 @@ const T = {
 
 type ViewMode = 'KANBAN' | 'LIST';
 
+const TASK_SERVICE_BASE = process.env.NEXT_PUBLIC_TASK_SERVICE_URL ?? 'http://localhost:3003/api/tasks';
+
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,7 @@ export default function TasksPage() {
   const fetchTasks = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch('/api/tasks/user', { headers: { Authorization: auth } });
+      const res = await fetch(TASK_SERVICE_BASE, { headers: { Authorization: auth } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load tasks');
       setTasks(Array.isArray(data) ? data : []);
@@ -80,7 +82,7 @@ export default function TasksPage() {
     }
     setCreateLoading(true); setCreateError('');
     try {
-      const res = await fetch('/api/tasks/user', {
+      const res = await fetch(TASK_SERVICE_BASE, {
         method: 'POST',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...createForm, status: 'TODO' }),
@@ -100,7 +102,7 @@ export default function TasksPage() {
   const handleStatusChange = async (id: string, status: string) => {
     setPatchingId(id);
     try {
-      const res = await fetch(`/api/tasks/user?id=${id}`, {
+      const res = await fetch(`${TASK_SERVICE_BASE}?id=${id}`, {
         method: 'PATCH',
         headers: { Authorization: auth, 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -116,7 +118,10 @@ export default function TasksPage() {
     if (!confirm('Delete this task?')) return;
     setDeletingId(id);
     try {
-      await fetch(`/api/tasks/user?id=${id}`, { method: 'DELETE', headers: { Authorization: auth } });
+      await fetch(`${TASK_SERVICE_BASE}?id=${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: auth },
+      });
       setTasks((prev) => prev.filter((t) => t._id !== id));
     } finally {
       setDeletingId(null);

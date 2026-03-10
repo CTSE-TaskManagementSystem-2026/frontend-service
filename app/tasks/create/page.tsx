@@ -15,6 +15,9 @@ const inputCls = 'task-input';
 
 interface Project { _id: string; name: string; }
 
+const TASK_SERVICE_BASE = process.env.NEXT_PUBLIC_TASK_SERVICE_URL ?? 'http://localhost:3003/api/tasks';
+const PROJECTS_SERVICE_BASE = process.env.NEXT_PUBLIC_PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects';
+
 export default function CreateTaskPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -30,7 +33,7 @@ export default function CreateTaskPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch('/api/projects/user', {
+    fetch(PROJECTS_SERVICE_BASE, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
@@ -49,7 +52,7 @@ export default function CreateTaskPage() {
     setError(''); setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/tasks/user', {
+      const res = await fetch(TASK_SERVICE_BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({

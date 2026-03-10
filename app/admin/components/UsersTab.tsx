@@ -12,21 +12,28 @@ interface User {
     createdAt: string;
 }
 
+const AUTH_SERVICE_BASE = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ?? 'http://localhost:3001/api/auth';
+
 export default function UsersTab({ token }: Props) {
     const auth = `Bearer ${token}`;
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [deletingId, setDeletingId] = useState('');
+    const [updatingId, setUpdatingId] = useState('');
     const [search, setSearch] = useState('');
 
+    // ── Fetch all users ──────────────────────────────────────────────────────
     const fetchUsers = useCallback(async () => {
         setLoading(true); setError('');
         try {
-            const res = await fetch('/api/auth/user', { headers: { Authorization: auth } });
+            const res = await fetch(`${AUTH_SERVICE_BASE}/users`, {
+                headers: { Authorization: auth },
+            });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed to fetch users');
-            setUsers(Array.isArray(data.users) ? data.users : []);
+            // Handle both array and wrapped { users: [] } response
+            setUsers(Array.isArray(data) ? data : (data.users ?? []));
         } catch (e: unknown) {
             setError(e instanceof Error ? e.message : 'Error');
         } finally {
@@ -36,21 +43,51 @@ export default function UsersTab({ token }: Props) {
 
     useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-    const handleDelete = async (id: string, name: string) => {
+    // ── Delete user ──────────────────────────────────────────────────────────
+    const handleDelete = async (userId: string, name: string) => {
         if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
-        setDeletingId(id);
+        setDeletingId(userId);
         try {
-            const res = await fetch(`/api/auth/user?userId=${id}`, {
+            const res = await fetch(`${AUTH_SERVICE_BASE}/users/${userId}`, {
                 method: 'DELETE',
                 headers: { Authorization: auth },
             });
-            if (res.ok) setUsers((prev) => prev.filter((u) => u._id !== id));
-            else {
+            if (res.ok) {
+                setUsers((prev) => prev.filter((u) => u._id !== userId));
+            } else {
                 const data = await res.json();
                 setError(data.message || 'Delete failed');
             }
         } finally {
             setDeletingId('');
+        }
+    };
+
+    // ── Toggle role user ↔ admin ─────────────────────────────────────────────
+    // Uses the frontend proxy PUT /api/auth/user (server-side, so AUTH_SERVICE_URL works)
+    const handleRoleToggle = async (id: string, currentRole: string) => {
+        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        if (!confirm(`Change this user's role to "${newRole}"?`)) return;
+        setUpdatingId(id);
+        try {
+            const res = await fetch(`${AUTH_SERVICE_BASE}/users`, {
+                method: 'PUT',
+                headers: {
+                    Authorization: auth,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: id, role: newRole }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setUsers((prev) =>
+                    prev.map((u) => (u._id === id ? { ...u, role: newRole } : u))
+                );
+            } else {
+                setError(data.message || 'Role update failed');
+            }
+        } finally {
+            setUpdatingId('');
         }
     };
 
@@ -67,102 +104,108 @@ export default function UsersTab({ token }: Props) {
     return (
         <>
             <style>{`
-        .users-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 1.5rem;
-          gap: 1rem;
-          flex-wrap: wrap;
-        }
-        .users-search {
-          padding: 0.5rem 0.875rem;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 4px;
-          font-family: 'Manrope', sans-serif;
-          font-size: 0.875rem;
-          color: #f1f5f9;
-          outline: none;
-          width: 260px;
-          transition: border-color 0.2s ease;
-        }
-        .users-search:focus        { border-color: rgba(34,211,238,0.4); }
-        .users-search::placeholder { color: #475569; }
+                .users-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 1.5rem;
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                }
+                .users-search {
+                    padding: 0.5rem 0.875rem;
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 4px;
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 0.875rem;
+                    color: #f1f5f9;
+                    outline: none;
+                    width: 260px;
+                    transition: border-color 0.2s ease;
+                }
+                .users-search:focus        { border-color: rgba(34,211,238,0.4); }
+                .users-search::placeholder { color: #475569; }
 
-        .users-table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        .users-table th {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.65rem;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #475569;
-          text-align: left;
-          padding: 0.625rem 1rem;
-          border-bottom: 1px solid rgba(255,255,255,0.07);
-          white-space: nowrap;
-        }
-        .users-table td {
-          padding: 0.875rem 1rem;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
-          font-family: 'Manrope', sans-serif;
-          font-size: 0.875rem;
-          color: #94a3b8;
-          vertical-align: middle;
-        }
-        .users-table tr:last-child td { border-bottom: none; }
-        .users-table tr:hover td { background: rgba(255,255,255,0.02); }
+                .users-table { width: 100%; border-collapse: collapse; }
+                .users-table th {
+                    font-family: 'IBM Plex Mono', monospace;
+                    font-size: 0.65rem;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: #475569;
+                    text-align: left;
+                    padding: 0.625rem 1rem;
+                    border-bottom: 1px solid rgba(255,255,255,0.07);
+                    white-space: nowrap;
+                }
+                .users-table td {
+                    padding: 0.875rem 1rem;
+                    border-bottom: 1px solid rgba(255,255,255,0.04);
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 0.875rem;
+                    color: #94a3b8;
+                    vertical-align: middle;
+                }
+                .users-table tr:last-child td { border-bottom: none; }
+                .users-table tr:hover td     { background: rgba(255,255,255,0.02); }
 
-        .user-avatar {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #22d3ee, #818cf8);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          font-family: 'Syne', sans-serif;
-          font-weight: 800;
-          font-size: 0.65rem;
-          color: #07080f;
-          margin-right: 0.625rem;
-          flex-shrink: 0;
-        }
-        .role-badge {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.62rem;
-          letter-spacing: 0.08em;
-          padding: 2px 8px;
-          border-radius: 2px;
-        }
-        .role-admin {
-          color: #818cf8;
-          background: rgba(129,140,248,0.08);
-          border: 1px solid rgba(129,140,248,0.2);
-        }
-        .role-user {
-          color: #22d3ee;
-          background: rgba(34,211,238,0.08);
-          border: 1px solid rgba(34,211,238,0.2);
-        }
-        .delete-btn {
-          padding: 0.35rem 0.75rem;
-          background: transparent;
-          border: 1px solid rgba(239,68,68,0.3);
-          border-radius: 2px;
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.62rem;
-          letter-spacing: 0.06em;
-          color: #ef4444;
-          cursor: pointer;
-          transition: background 0.2s ease;
-        }
-        .delete-btn:hover    { background: rgba(239,68,68,0.1); }
-        .delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-      `}</style>
+                .user-avatar {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #22d3ee, #818cf8);
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: 'Syne', sans-serif;
+                    font-weight: 800;
+                    font-size: 0.65rem;
+                    color: #07080f;
+                    margin-right: 0.625rem;
+                    flex-shrink: 0;
+                }
+                .role-badge {
+                    font-family: 'IBM Plex Mono', monospace;
+                    font-size: 0.62rem;
+                    letter-spacing: 0.08em;
+                    padding: 2px 8px;
+                    border-radius: 2px;
+                }
+                .role-admin {
+                    color: #818cf8;
+                    background: rgba(129,140,248,0.08);
+                    border: 1px solid rgba(129,140,248,0.2);
+                }
+                .role-user {
+                    color: #22d3ee;
+                    background: rgba(34,211,238,0.08);
+                    border: 1px solid rgba(34,211,238,0.2);
+                }
+                .action-btn {
+                    padding: 0.35rem 0.75rem;
+                    background: transparent;
+                    border-radius: 2px;
+                    font-family: 'IBM Plex Mono', monospace;
+                    font-size: 0.62rem;
+                    letter-spacing: 0.06em;
+                    cursor: pointer;
+                    transition: background 0.2s ease;
+                }
+                .role-btn {
+                    border: 1px solid rgba(129,140,248,0.3);
+                    color: #818cf8;
+                    margin-right: 0.5rem;
+                }
+                .role-btn:hover    { background: rgba(129,140,248,0.1); }
+                .role-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+                .delete-btn {
+                    border: 1px solid rgba(239,68,68,0.3);
+                    color: #ef4444;
+                }
+                .delete-btn:hover    { background: rgba(239,68,68,0.1); }
+                .delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+            `}</style>
 
             <div className="users-header">
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1rem', color: '#f1f5f9' }}>
@@ -204,7 +247,7 @@ export default function UsersTab({ token }: Props) {
                                     <th>Email</th>
                                     <th>Role</th>
                                     <th>Joined</th>
-                                    <th></th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -225,9 +268,19 @@ export default function UsersTab({ token }: Props) {
                                         <td style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.7rem' }}>
                                             {new Date(u.createdAt).toLocaleDateString()}
                                         </td>
-                                        <td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>
                                             <button
-                                                className="delete-btn"
+                                                className="action-btn role-btn"
+                                                disabled={updatingId === u._id}
+                                                onClick={() => handleRoleToggle(u._id, u.role)}
+                                                title={`Switch to ${u.role === 'admin' ? 'user' : 'admin'}`}
+                                            >
+                                                {updatingId === u._id
+                                                    ? '…'
+                                                    : u.role === 'admin' ? '→ USER' : '→ ADMIN'}
+                                            </button>
+                                            <button
+                                                className="action-btn delete-btn"
                                                 disabled={deletingId === u._id}
                                                 onClick={() => handleDelete(u._id, u.name)}
                                             >

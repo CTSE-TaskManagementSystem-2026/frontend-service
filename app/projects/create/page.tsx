@@ -10,6 +10,8 @@ const STATUSES = ['active', 'inactive', 'archived', 'completed'];
 const labelCls = 'create-label';
 const inputCls = 'create-input';
 
+const PROJECTS_SERVICE_BASE = process.env.NEXT_PUBLIC_PROJECTS_SERVICE_URL ?? 'http://localhost:3002/api/projects';
+
 export default function CreateProjectPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: '', description: '', status: 'active', color: COLORS[0], dueDate: '', tags: '' });
@@ -24,12 +26,13 @@ export default function CreateProjectPage() {
     setError(''); setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/projects/user', {
+      const res = await fetch(PROJECTS_SERVICE_BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...form, tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean) }),
       });
-      if (!res.ok) throw new Error('Failed to create project');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || 'Failed to create project');
       router.push('/projects');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error');

@@ -28,6 +28,8 @@ const STATUS_STYLE: Record<string, { color: string }> = {
     'DONE': { color: '#34d399' },
 };
 
+const TASK_SERVICE_BASE = process.env.NEXT_PUBLIC_TASK_SERVICE_URL ?? 'http://localhost:3003/api/tasks';
+
 export default function TasksTab({ token }: Props) {
     const auth = `Bearer ${token}`;
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -40,7 +42,7 @@ export default function TasksTab({ token }: Props) {
     const fetchTasks = useCallback(async () => {
         setLoading(true); setError('');
         try {
-            const res = await fetch('/api/tasks/admin', { headers: { Authorization: auth } });
+            const res = await fetch(TASK_SERVICE_BASE, { headers: { Authorization: auth } });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || data.message || 'Failed to fetch');
             setTasks(Array.isArray(data) ? data : []);
@@ -57,7 +59,7 @@ export default function TasksTab({ token }: Props) {
         if (!confirm(`Delete task "${title}"? This cannot be undone.`)) return;
         setDeletingId(id);
         try {
-            const res = await fetch(`/api/tasks/admin?id=${id}`, {
+            const res = await fetch(`${TASK_SERVICE_BASE}?id=${id}`, {
                 method: 'DELETE',
                 headers: { Authorization: auth },
             });
@@ -70,7 +72,6 @@ export default function TasksTab({ token }: Props) {
             setDeletingId('');
         }
     };
-
     const STATUSES = ['ALL', 'TODO', 'IN PROGRESS', 'IN REVIEW', 'DONE'];
 
     const filtered = tasks.filter((t) => {

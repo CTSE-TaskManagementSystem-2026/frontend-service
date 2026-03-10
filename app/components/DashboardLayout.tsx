@@ -55,6 +55,15 @@ interface DashboardLayoutProps {
   actions?: React.ReactNode;
 }
 
+
+const handleLogout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('role');
+  localStorage.removeItem('name');
+  localStorage.removeItem('email');
+  window.location.href = '/login';
+};
+
 export default function DashboardLayout({ children, title, subtitle, actions }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -369,6 +378,29 @@ export default function DashboardLayout({ children, title, subtitle, actions }: 
                 <div className="dash-user-name">{userName || 'User'}</div>
                 <div className="dash-user-role">{userRole || '—'}</div>
               </div>
+
+              <button
+                onClick={handleLogout}
+                title="Log out"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  color: '#475569',
+                  flexShrink: 0,
+                  lineHeight: 1,
+                  transition: 'color 0.2s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#475569')}
+              >
+                <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
             </div>
           </div>
         </aside>
