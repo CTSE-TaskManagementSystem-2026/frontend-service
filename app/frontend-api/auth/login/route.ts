@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Server-side only — safe to use in ECS Task Definition env vars & .env.local
 // Never exposed to the browser (no NEXT_PUBLIC_ prefix needed)
-const AUTH_SERVICE_URL = 'http://auth-service.internal.local/api/auth';
+const AUTH_SERVICE_URL = 'http://auth-service.internal.local:3000/api/auth';
 
 export async function POST(req: NextRequest) {
     try {
