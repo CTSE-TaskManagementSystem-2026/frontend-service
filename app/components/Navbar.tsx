@@ -156,7 +156,7 @@ export default function Navbar() {
               }}
             />
             <span className="logo-text">TaskMaster</span>
-            <span className="logo-badge">v2</span>
+            {/* <span className="logo-badge">v2</span> */}
           </Link>
 
           {/* Desktop nav */}
@@ -199,8 +199,8 @@ export default function Navbar() {
                   style={{
                     transform:
                       menuOpen && i === 0 ? 'translateY(7px) rotate(45deg)'
-                      : menuOpen && i === 2 ? 'translateY(-7px) rotate(-45deg)'
-                      : menuOpen && i === 1 ? 'scaleX(0)' : 'none',
+                        : menuOpen && i === 2 ? 'translateY(-7px) rotate(-45deg)'
+                          : menuOpen && i === 1 ? 'scaleX(0)' : 'none',
                     opacity: menuOpen && i === 1 ? 0 : 1,
                   }}
                 />
