@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-interface Props { token: string; }
+interface Props {
+    token: string;
+}
 
 interface Task {
     _id: string;
@@ -15,20 +17,51 @@ interface Task {
     createdAt: string;
 }
 
-const PRIORITY_STYLE: Record<string, { color: string; bg: string; border: string }> = {
-    high: { color: '#ef4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)' },
-    medium: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)' },
-    low: { color: '#34d399', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.2)' },
+const PRIORITY_STYLE: Record<
+    string,
+    { color: string; bg: string; border: string }
+> = {
+    high: {
+        color: '#ef4444',
+        bg: 'rgba(239,68,68,0.10)',
+        border: 'rgba(239,68,68,0.24)',
+    },
+    medium: {
+        color: '#f59e0b',
+        bg: 'rgba(245,158,11,0.10)',
+        border: 'rgba(245,158,11,0.24)',
+    },
+    low: {
+        color: '#34d399',
+        bg: 'rgba(52,211,153,0.10)',
+        border: 'rgba(52,211,153,0.24)',
+    },
 };
 
-const STATUS_STYLE: Record<string, { color: string }> = {
-    'TODO': { color: '#475569' },
-    'IN PROGRESS': { color: '#22d3ee' },
-    'IN REVIEW': { color: '#f59e0b' },
-    'DONE': { color: '#34d399' },
+const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+    TODO: {
+        color: '#64748b',
+        bg: 'rgba(100,116,139,0.10)',
+        border: 'rgba(100,116,139,0.24)',
+    },
+    'IN PROGRESS': {
+        color: '#22d3ee',
+        bg: 'rgba(34,211,238,0.10)',
+        border: 'rgba(34,211,238,0.24)',
+    },
+    'IN REVIEW': {
+        color: '#f59e0b',
+        bg: 'rgba(245,158,11,0.10)',
+        border: 'rgba(245,158,11,0.24)',
+    },
+    DONE: {
+        color: '#34d399',
+        bg: 'rgba(52,211,153,0.10)',
+        border: 'rgba(52,211,153,0.24)',
+    },
 };
 
-// All task requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
+const STATUSES = ['ALL', 'TODO', 'IN PROGRESS', 'IN REVIEW', 'DONE'];
 
 export default function TasksTab({ token }: Props) {
     const auth = `Bearer ${token}`;
@@ -40,9 +73,13 @@ export default function TasksTab({ token }: Props) {
     const [filterStatus, setFilterStatus] = useState('ALL');
 
     const fetchTasks = useCallback(async () => {
-        setLoading(true); setError('');
+        setLoading(true);
+        setError('');
+
         try {
-            const res = await fetch('/frontend-api/tasks/admin', { headers: { Authorization: auth } });
+            const res = await fetch('/frontend-api/tasks/admin', {
+                headers: { Authorization: auth },
+            });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || data.message || 'Failed to fetch');
             setTasks(Array.isArray(data) ? data : []);
@@ -53,18 +90,26 @@ export default function TasksTab({ token }: Props) {
         }
     }, [auth]);
 
-    useEffect(() => { fetchTasks(); }, [fetchTasks]);
+    useEffect(() => {
+        fetchTasks();
+    }, [fetchTasks]);
 
     const handleDelete = async (id: string, title: string) => {
         if (!confirm(`Delete task "${title}"? This cannot be undone.`)) return;
+
         setDeletingId(id);
         try {
-            const res = await fetch(`/frontend-api/tasks/admin?id=${encodeURIComponent(id)}`, {
-                method: 'DELETE',
-                headers: { Authorization: auth },
-            });
-            if (res.ok) setTasks((prev) => prev.filter((t) => t._id !== id));
-            else {
+            const res = await fetch(
+                `/frontend-api/tasks/admin?id=${encodeURIComponent(id)}`,
+                {
+                    method: 'DELETE',
+                    headers: { Authorization: auth },
+                }
+            );
+
+            if (res.ok) {
+                setTasks((prev) => prev.filter((t) => t._id !== id));
+            } else {
                 const data = await res.json();
                 setError(data.error || data.message || 'Delete failed');
             }
@@ -72,7 +117,6 @@ export default function TasksTab({ token }: Props) {
             setDeletingId('');
         }
     };
-    const STATUSES = ['ALL', 'TODO', 'IN PROGRESS', 'IN REVIEW', 'DONE'];
 
     const filtered = tasks.filter((t) => {
         const matchSearch = t.title.toLowerCase().includes(search.toLowerCase());
@@ -81,207 +125,169 @@ export default function TasksTab({ token }: Props) {
     });
 
     return (
-        <>
-            <style>{`
-        .tasks-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 1rem;
-          gap: 1rem;
-          flex-wrap: wrap;
-        }
-        .tasks-search {
-          padding: 0.5rem 0.875rem;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 4px;
-          font-family: 'Manrope', sans-serif;
-          font-size: 0.875rem;
-          color: #f1f5f9;
-          outline: none;
-          width: 220px;
-          transition: border-color 0.2s ease;
-        }
-        .tasks-search:focus        { border-color: rgba(34,211,238,0.4); }
-        .tasks-search::placeholder { color: #475569; }
-
-        .status-filter-bar {
-          display: flex;
-          gap: 0.375rem;
-          flex-wrap: wrap;
-          margin-bottom: 1.5rem;
-        }
-        .status-filter-btn {
-          padding: 0.35rem 0.875rem;
-          border-radius: 2px;
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.62rem;
-          letter-spacing: 0.08em;
-          cursor: pointer;
-          transition: background 0.2s ease, color 0.2s ease;
-          border: 1px solid rgba(255,255,255,0.08);
-          background: transparent;
-          color: #475569;
-        }
-        .status-filter-btn:hover    { color: #94a3b8; }
-        .status-filter-btn-active {
-          background: rgba(34,211,238,0.1);
-          border-color: rgba(34,211,238,0.3);
-          color: #22d3ee;
-        }
-
-        .tasks-table { width: 100%; border-collapse: collapse; }
-        .tasks-table th {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.65rem;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #475569;
-          text-align: left;
-          padding: 0.625rem 1rem;
-          border-bottom: 1px solid rgba(255,255,255,0.07);
-          white-space: nowrap;
-        }
-        .tasks-table td {
-          padding: 0.875rem 1rem;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
-          font-family: 'Manrope', sans-serif;
-          font-size: 0.875rem;
-          color: #94a3b8;
-          vertical-align: middle;
-        }
-        .tasks-table tr:last-child td { border-bottom: none; }
-        .tasks-table tr:hover td     { background: rgba(255,255,255,0.02); }
-
-        .priority-badge, .task-status-badge {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.62rem;
-          letter-spacing: 0.08em;
-          padding: 2px 8px;
-          border-radius: 2px;
-          text-transform: uppercase;
-        }
-        .task-delete-btn {
-          padding: 0.35rem 0.75rem;
-          background: transparent;
-          border: 1px solid rgba(239,68,68,0.3);
-          border-radius: 2px;
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.62rem;
-          letter-spacing: 0.06em;
-          color: #ef4444;
-          cursor: pointer;
-          transition: background 0.2s ease;
-        }
-        .task-delete-btn:hover    { background: rgba(239,68,68,0.1); }
-        .task-delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-      `}</style>
-
-            <div className="tasks-header">
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1rem', color: '#f1f5f9' }}>
-                    Tasks
-                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem', color: '#475569', marginLeft: '0.75rem', letterSpacing: '0.08em' }}>
-                        {tasks.length} TOTAL
-                    </span>
+        <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
+                        Task Registry
+                    </p>
+                    <div className="mt-2 flex items-center gap-3">
+                        <h3 className="text-2xl font-extrabold tracking-[-0.03em] text-[color:var(--color-text-primary)]">
+                            Tasks
+                        </h3>
+                        <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-violet-400">
+                            {tasks.length} total
+                        </span>
+                    </div>
                 </div>
-                <input
-                    type="text"
-                    placeholder="Search by title…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="tasks-search"
-                />
+
+                <div className="relative w-full sm:w-[280px]">
+                    <svg
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--color-text-muted)]"
+                    >
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+
+                    <input
+                        type="text"
+                        placeholder="Search by title…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] py-3 pl-11 pr-4 text-sm text-[color:var(--color-text-primary)] outline-none transition duration-200 placeholder:text-[color:var(--color-text-muted)] focus:border-[color:var(--color-border-accent)]"
+                    />
+                </div>
             </div>
 
-            {/* Status filter pills */}
-            <div className="status-filter-bar">
-                {STATUSES.map((s) => (
-                    <button
-                        key={s}
-                        onClick={() => setFilterStatus(s)}
-                        className={`status-filter-btn ${filterStatus === s ? 'status-filter-btn-active' : ''}`}
-                    >
-                        {s}
-                    </button>
-                ))}
+            <div className="flex flex-wrap gap-2">
+                {STATUSES.map((s) => {
+                    const active = filterStatus === s;
+                    return (
+                        <button
+                            key={s}
+                            onClick={() => setFilterStatus(s)}
+                            className={`rounded-xl border px-3 py-2 font-mono text-[11px] uppercase tracking-[0.12em] transition duration-200 ${active
+                                    ? 'border-violet-400/25 bg-violet-500/10 text-violet-400'
+                                    : 'border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-secondary)]'
+                                }`}
+                        >
+                            {s}
+                        </button>
+                    );
+                })}
             </div>
 
             {error && (
-                <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.75rem', color: '#f87171', marginBottom: '1rem' }}>
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                     {error}
                 </div>
             )}
 
-            <div style={{ background: '#0d0f1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', overflow: 'hidden' }}>
+            <div className="overflow-hidden rounded-[30px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
                 {loading ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.72rem', color: '#475569', letterSpacing: '0.1em' }}>
-                        LOADING TASKS…
+                    <div className="px-6 py-16 text-center font-mono text-xs uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+                        Loading tasks…
                     </div>
                 ) : filtered.length === 0 ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.72rem', color: '#475569', letterSpacing: '0.1em' }}>
-                        NO TASKS FOUND
+                    <div className="px-6 py-16 text-center font-mono text-xs uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+                        No tasks found
                     </div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="tasks-table">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Status</th>
-                                    <th>Priority</th>
-                                    <th>Project ID</th>
-                                    <th>Created</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filtered.map((t) => {
-                                    const p = PRIORITY_STYLE[t.priority.toLowerCase()] ?? PRIORITY_STYLE.medium;
-                                    const st = STATUS_STYLE[t.status] ?? { color: '#475569' };
-                                    return (
-                                        <tr key={t._id}>
-                                            <td>
-                                                <div style={{ color: '#f1f5f9', fontWeight: 500 }}>{t.title}</div>
-                                                {t.description && (
-                                                    <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '2px' }}>
-                                                        {t.description.slice(0, 60)}{t.description.length > 60 ? '…' : ''}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span className="task-status-badge" style={{ color: st.color, border: `1px solid ${st.color}30`, background: `${st.color}10` }}>
-                                                    {t.status}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className="priority-badge" style={{ color: p.color, background: p.bg, border: `1px solid ${p.border}` }}>
-                                                    {t.priority}
-                                                </span>
-                                            </td>
-                                            <td style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem', color: '#475569' }}>
-                                                {t.projectId.slice(-8)}…
-                                            </td>
-                                            <td style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.7rem' }}>
-                                                {new Date(t.createdAt).toLocaleDateString()}
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="task-delete-btn"
-                                                    disabled={deletingId === t._id}
-                                                    onClick={() => handleDelete(t._id, t.title)}
-                                                >
-                                                    {deletingId === t._id ? '…' : 'DELETE'}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                    <div className="overflow-x-auto">
+                        <div className="min-w-[980px]">
+                            <div className="grid grid-cols-[minmax(280px,1.7fr)_150px_130px_150px_140px_110px] gap-4 border-b border-[color:var(--color-border)] px-6 py-4">
+                                {['Title', 'Status', 'Priority', 'Project ID', 'Created', 'Action'].map((h) => (
+                                    <span
+                                        key={h}
+                                        className="font-mono text-[11px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]"
+                                    >
+                                        {h}
+                                    </span>
+                                ))}
+                            </div>
+
+                            {filtered.map((t, index) => {
+                                const p =
+                                    PRIORITY_STYLE[t.priority.toLowerCase()] ?? PRIORITY_STYLE.medium;
+                                const st = STATUS_STYLE[t.status] ?? STATUS_STYLE.TODO;
+
+                                return (
+                                    <div
+                                        key={t._id}
+                                        className={`grid grid-cols-[minmax(280px,1.7fr)_150px_130px_150px_140px_110px] items-center gap-4 px-6 py-4 transition duration-150 hover:bg-white/[0.02] ${index < filtered.length - 1
+                                                ? 'border-b border-[color:var(--color-border)]'
+                                                : ''
+                                            }`}
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="truncate text-sm font-semibold text-[color:var(--color-text-primary)]">
+                                                {t.title}
+                                            </div>
+
+                                            {t.description && (
+                                                <div className="mt-1 truncate text-sm text-[color:var(--color-text-muted)]">
+                                                    {t.description.slice(0, 60)}
+                                                    {t.description.length > 60 ? '…' : ''}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <span
+                                                className="inline-flex rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+                                                style={{
+                                                    color: st.color,
+                                                    background: st.bg,
+                                                    borderColor: st.border,
+                                                }}
+                                            >
+                                                {t.status}
+                                            </span>
+                                        </div>
+
+                                        <div>
+                                            <span
+                                                className="inline-flex rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+                                                style={{
+                                                    color: p.color,
+                                                    background: p.bg,
+                                                    borderColor: p.border,
+                                                }}
+                                            >
+                                                {t.priority}
+                                            </span>
+                                        </div>
+
+                                        <span className="font-mono text-xs text-[color:var(--color-text-secondary)]">
+                                            {t.projectId.slice(-8)}…
+                                        </span>
+
+                                        <span className="font-mono text-xs text-[color:var(--color-text-secondary)]">
+                                            {new Date(t.createdAt).toLocaleDateString()}
+                                        </span>
+
+                                        <div>
+                                            <button
+                                                disabled={deletingId === t._id}
+                                                onClick={() => handleDelete(t._id, t.title)}
+                                                className="rounded-xl border border-red-500/30 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-red-400 transition duration-200 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40"
+                                            >
+                                                {deletingId === t._id ? '…' : 'Delete'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
             </div>
-        </>
+        </div>
     );
 }

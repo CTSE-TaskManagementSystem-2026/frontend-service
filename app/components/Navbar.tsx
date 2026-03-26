@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+
+type Theme = 'dark' | 'light';
 
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
@@ -10,231 +12,286 @@ const NAV_LINKS = [
   { label: 'Docs', href: '#docs' },
 ];
 
+const THEME_TOKENS: Record<Theme, Record<string, string>> = {
+  dark: {
+    '--color-bg-primary': '#07080F',
+    '--color-bg-secondary': '#0D0E1A',
+    '--color-bg-card': '#0F1020',
+    '--color-border': 'rgba(255,255,255,0.08)',
+    '--color-border-accent': 'rgba(34,211,238,0.3)',
+    '--color-accent-cyan': '#22D3EE',
+    '--color-accent-amber': '#F59E0B',
+    '--color-accent-violet': '#818CF8',
+    '--color-text-primary': '#F1F5F9',
+    '--color-text-secondary': '#94A3B8',
+    '--color-text-muted': '#475569',
+    '--color-dark-base': '#07080F',
+    '--bg-primary': '#07080F',
+    '--bg-secondary': '#0D0E1A',
+    '--bg-card': '#0F1020',
+    '--border': 'rgba(255,255,255,0.08)',
+    '--border-accent': 'rgba(34,211,238,0.3)',
+    '--accent-cyan': '#22D3EE',
+    '--accent-amber': '#F59E0B',
+    '--accent-violet': '#818CF8',
+    '--text-primary': '#F1F5F9',
+    '--text-secondary': '#94A3B8',
+    '--text-muted': '#475569',
+  },
+  light: {
+    '--color-bg-primary': '#F8FAFC',
+    '--color-bg-secondary': '#EEF2FF',
+    '--color-bg-card': '#FFFFFF',
+    '--color-border': 'rgba(15,23,42,0.08)',
+    '--color-border-accent': 'rgba(14,165,233,0.22)',
+    '--color-accent-cyan': '#0891B2',
+    '--color-accent-amber': '#D97706',
+    '--color-accent-violet': '#6366F1',
+    '--color-text-primary': '#0F172A',
+    '--color-text-secondary': '#475569',
+    '--color-text-muted': '#64748B',
+    '--color-dark-base': '#0F172A',
+    '--bg-primary': '#F8FAFC',
+    '--bg-secondary': '#EEF2FF',
+    '--bg-card': '#FFFFFF',
+    '--border': 'rgba(15,23,42,0.08)',
+    '--border-accent': 'rgba(14,165,233,0.22)',
+    '--accent-cyan': '#0891B2',
+    '--accent-amber': '#D97706',
+    '--accent-violet': '#6366F1',
+    '--text-primary': '#0F172A',
+    '--text-secondary': '#475569',
+    '--text-muted': '#64748B',
+  },
+};
+
+function applyTheme(theme: Theme) {
+  const root = document.documentElement;
+  const tokens = THEME_TOKENS[theme];
+
+  Object.entries(tokens).forEach(([key, value]) => {
+    root.style.setProperty(key, value);
+  });
+
+  root.dataset.theme = theme;
+  root.classList.toggle('dark', theme === 'dark');
+
+  document.body.style.backgroundColor = tokens['--color-bg-primary'];
+  document.body.style.color = tokens['--color-text-primary'];
+
+  localStorage.setItem('theme', theme);
+}
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<Theme>('dark');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 30);
+    const onScroll = () => setScrolled(window.scrollY > 24);
+
     window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as Theme | null;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme ?? (prefersDark ? 'dark' : 'light');
+
+    setTheme(initialTheme);
+    applyTheme(initialTheme);
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    applyTheme(theme);
+  }, [theme, mounted]);
+
+  const isDark = theme === 'dark';
+
+  const shellClasses = isDark
+    ? scrolled
+      ? 'border-white/10 bg-slate-950/80 shadow-[0_20px_60px_rgba(2,6,23,0.45)]'
+      : 'border-white/10 bg-slate-950/55 shadow-[0_18px_50px_rgba(2,6,23,0.28)]'
+    : scrolled
+      ? 'border-slate-200/90 bg-white/85 shadow-[0_20px_60px_rgba(15,23,42,0.12)]'
+      : 'border-slate-200/80 bg-white/70 shadow-[0_18px_50px_rgba(15,23,42,0.08)]';
+
+  const textPrimary = isDark ? 'text-slate-100' : 'text-slate-900';
+  const textSecondary = isDark ? 'text-slate-300' : 'text-slate-600';
+  const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
+  const hoverText = isDark ? 'hover:text-cyan-300' : 'hover:text-sky-700';
+  const divider = isDark ? 'border-white/10' : 'border-slate-200/80';
+
+  const toggleTheme = () => {
+    setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
+  };
+
   return (
-    <>
-      <style>{`
-        :root {
-          --color-bg-primary: #07080f;
-          --color-bg-secondary: #0d0f1a;
-          --color-text-primary: #f0f2ff;
-          --color-text-secondary: #a0a8c8;
-          --color-text-muted: #5a6280;
-          --color-accent-cyan: #22d3ee;
-          --color-accent-indigo: #818cf8;
-          --color-dark-base: #07080f;
-        }
-
-        .nav-link {
-          font-family: inherit;
-          font-weight: 500;
-          font-size: 0.875rem;
-          color: var(--color-text-secondary);
-          text-decoration: none;
-          letter-spacing: 0.03em;
-          transition: color 0.2s ease;
-        }
-        .nav-link:hover {
-          color: var(--color-text-primary);
-        }
-
-        .btn-signin {
-          font-weight: 500;
-          font-size: 0.875rem;
-          color: var(--color-text-secondary);
-          text-decoration: none;
-          transition: color 0.2s ease;
-        }
-        .btn-signin:hover {
-          color: var(--color-text-primary);
-        }
-
-        .btn-cta {
-          font-weight: 600;
-          font-size: 0.875rem;
-          letter-spacing: 0.05em;
-          color: var(--color-dark-base);
-          background: var(--color-accent-cyan);
-          text-decoration: none;
-          padding: 0.5rem 1.25rem;
-          border-radius: 2px;
-          transition: opacity 0.2s ease, transform 0.2s ease;
-          display: inline-block;
-          white-space: nowrap;
-        }
-        .btn-cta:hover {
-          opacity: 0.85;
-          transform: translateY(-1px);
-        }
-
-        .logo-badge {
-          font-family: monospace;
-          font-size: 0.65rem;
-          color: var(--color-accent-cyan);
-          background: rgba(34, 211, 238, 0.1);
-          border: 1px solid rgba(34, 211, 238, 0.25);
-          padding: 0.125rem 0.375rem;
-          border-radius: 2px;
-          letter-spacing: 0.1em;
-        }
-
-        .logo-text {
-          font-weight: 800;
-          font-size: 1.3rem;
-          letter-spacing: 0.06em;
-          color: var(--color-text-primary);
-        }
-
-        .hamburger-bar {
-          display: block;
-          width: 22px;
-          height: 2px;
-          background: var(--color-text-primary);
-          transition: all 0.3s ease;
-        }
-
-        .mobile-nav-link {
-          font-weight: 500;
-          font-size: 1rem;
-          color: var(--color-text-secondary);
-          text-decoration: none;
-        }
-
-        @media (min-width: 768px) {
-          .mobile-only { display: none !important; }
-        }
-        @media (max-width: 767px) {
-          .desktop-only { display: none !important; }
-        }
-      `}</style>
-
-      <header
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 100,
-          transition: 'all 0.3s ease',
-          backgroundColor: scrolled ? 'rgba(7, 8, 15, 0.92)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(16px)' : 'none',
-          WebkitBackdropFilter: scrolled ? 'blur(16px)' : 'none',
-          borderBottom: scrolled
-            ? '1px solid rgba(34, 211, 238, 0.1)'
-            : '1px solid transparent',
-        }}
+    <header className="fixed inset-x-0 top-0 z-50 px-4 sm:px-6">
+      <div
+        className={`mx-auto mt-3 max-w-7xl rounded-[28px] border backdrop-blur-2xl transition-all duration-300 ${shellClasses}`}
       >
-        <div
-          style={{
-            maxWidth: '1280px',
-            margin: '0 auto',
-            padding: '0 2rem',
-            height: '68px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          {/* Logo */}
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-            <div
-              style={{
-                width: '2rem',
-                height: '2rem',
-                flexShrink: 0,
-                background: 'linear-gradient(135deg, #22D3EE, #818CF8)',
-                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-              }}
-            />
-            <span className="logo-text">TaskMaster</span>
-            {/* <span className="logo-badge">v2</span> */}
+        <div className="flex h-[72px] items-center justify-between px-4 sm:px-6">
+          <Link
+            href="/"
+            className="flex items-center gap-3 text-decoration-none"
+            onClick={() => setMenuOpen(false)}
+          >
+            <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/20 via-sky-400/10 to-violet-500/20">
+              <div className="h-6 w-6 bg-gradient-to-br from-cyan-300 via-sky-400 to-violet-500 [clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]" />
+            </div>
+
+            <div className="flex flex-col leading-none">
+              <span className={`text-[1.05rem] font-extrabold tracking-[0.08em] ${textPrimary}`}>
+                TASKMASTER
+              </span>
+              <span className={`text-[0.62rem] font-medium uppercase tracking-[0.26em] ${textMuted}`}>
+                Workspace
+              </span>
+            </div>
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
+          <nav className="hidden items-center gap-8 md:flex">
             {NAV_LINKS.map((link) => (
-              <Link key={link.label} href={link.href} className="nav-link">
+              <Link
+                key={link.label}
+                href={link.href}
+                className={`text-sm font-medium tracking-[0.03em] transition-colors duration-200 ${textSecondary} ${hoverText}`}
+              >
                 {link.label}
               </Link>
             ))}
           </nav>
 
-          {/* CTA buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <Link href="/login" className="btn-signin desktop-only">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className={`group inline-flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300 ${isDark
+                  ? 'border-white/10 bg-white/5 text-slate-200 hover:border-cyan-300/40 hover:bg-cyan-400/10 hover:text-cyan-200'
+                  : 'border-slate-200 bg-white/80 text-slate-700 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700'
+                }`}
+            >
+              {isDark ? (
+                <svg
+                  className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <path
+                    d="M12 3V5M12 19V21M4.93 4.93L6.34 6.34M17.66 17.66L19.07 19.07M3 12H5M19 12H21M4.93 19.07L6.34 17.66M17.66 6.34L19.07 4.93M12 16A4 4 0 1 0 12 8A4 4 0 0 0 12 16Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="h-5 w-5 transition-transform duration-300 group-hover:-rotate-12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <path
+                    d="M21 12.8A9 9 0 1 1 11.2 3C10.9 3.8 10.75 4.66 10.75 5.56C10.75 9.7 14.1 13.06 18.25 13.06C19.15 13.06 20.03 12.97 21 12.8Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </button>
+
+            <Link
+              href="/login"
+              className={`hidden text-sm font-medium transition-colors duration-200 md:inline-flex ${textSecondary} ${hoverText}`}
+            >
               Sign In
             </Link>
-            <Link href="/signup" className="btn-cta">
+
+            <Link
+              href="/signup"
+              className="hidden rounded-2xl bg-cyan-400 px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-slate-950 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(34,211,238,0.28)] sm:inline-flex"
+            >
               Get Started
             </Link>
 
-            {/* Mobile hamburger */}
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
+              type="button"
+              onClick={() => setMenuOpen((current) => !current)}
               aria-label="Toggle menu"
-              className="mobile-only"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '5px',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px',
-              }}
+              className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl border transition-colors duration-300 md:hidden ${isDark
+                  ? 'border-white/10 bg-white/5 text-slate-100 hover:border-cyan-300/40 hover:bg-cyan-400/10'
+                  : 'border-slate-200 bg-white/80 text-slate-900 hover:border-sky-300 hover:bg-sky-50'
+                }`}
             >
-              {[0, 1, 2].map((i) => (
+              <div className="relative h-4 w-5">
                 <span
-                  key={i}
-                  className="hamburger-bar"
-                  style={{
-                    transform:
-                      menuOpen && i === 0 ? 'translateY(7px) rotate(45deg)'
-                        : menuOpen && i === 2 ? 'translateY(-7px) rotate(-45deg)'
-                          : menuOpen && i === 1 ? 'scaleX(0)' : 'none',
-                    opacity: menuOpen && i === 1 ? 0 : 1,
-                  }}
+                  className={`absolute left-0 top-0 block h-0.5 w-5 rounded-full transition-all duration-300 ${isDark ? 'bg-slate-100' : 'bg-slate-900'
+                    } ${menuOpen ? 'translate-y-[7px] rotate-45' : ''}`}
                 />
-              ))}
+                <span
+                  className={`absolute left-0 top-[7px] block h-0.5 w-5 rounded-full transition-all duration-300 ${isDark ? 'bg-slate-100' : 'bg-slate-900'
+                    } ${menuOpen ? 'opacity-0' : 'opacity-100'}`}
+                />
+                <span
+                  className={`absolute left-0 top-[14px] block h-0.5 w-5 rounded-full transition-all duration-300 ${isDark ? 'bg-slate-100' : 'bg-slate-900'
+                    } ${menuOpen ? '-translate-y-[7px] -rotate-45' : ''}`}
+                />
+              </div>
             </button>
           </div>
         </div>
 
-        {/* Mobile menu */}
         {menuOpen && (
-          <div
-            className="mobile-only"
-            style={{
-              background: 'rgba(7, 8, 15, 0.97)',
-              borderTop: '1px solid rgba(34, 211, 238, 0.1)',
-              padding: '1.5rem 2rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.25rem',
-            }}
-          >
-            {NAV_LINKS.map((link) => (
+          <div className={`border-t px-4 pb-4 pt-3 md:hidden sm:px-6 ${divider}`}>
+            <div className="flex flex-col gap-2">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 ${isDark
+                      ? 'text-slate-200 hover:bg-white/5 hover:text-cyan-300'
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-sky-700'
+                    }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              <div className={`my-2 border-t ${divider}`} />
+
               <Link
-                key={link.label}
-                href={link.href}
+                href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="mobile-nav-link"
+                className={`rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 ${isDark
+                    ? 'text-slate-200 hover:bg-white/5 hover:text-cyan-300'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-sky-700'
+                  }`}
               >
-                {link.label}
+                Sign In
               </Link>
-            ))}
+
+              <Link
+                href="/signup"
+                onClick={() => setMenuOpen(false)}
+                className="mt-1 inline-flex justify-center rounded-2xl bg-cyan-400 px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-slate-950 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(34,211,238,0.28)]"
+              >
+                Get Started
+              </Link>
+            </div>
           </div>
         )}
-      </header>
-    </>
+      </div>
+    </header>
   );
 }

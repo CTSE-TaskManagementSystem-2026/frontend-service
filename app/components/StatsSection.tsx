@@ -3,198 +3,72 @@
 import Link from 'next/link';
 
 const STATS = [
-  { value: '10k+',   label: 'Active Projects' },
-  { value: '250k+',  label: 'Tasks Managed' },
-  { value: '98.7%',  label: 'Customer Satisfaction' },
+  { value: '10k+', label: 'Active Projects' },
+  { value: '250k+', label: 'Tasks Managed' },
+  { value: '98.7%', label: 'Customer Satisfaction' },
   { value: '< 100ms', label: 'Avg API Response' },
 ];
 
 export default function StatsSection() {
   return (
     <>
-      <style>{`
-        /* ── Design tokens ── */
-        :root {
-          --color-bg-primary:    #07080f;
-          --color-bg-secondary:  #0d0f1a;
-          --color-text-primary:  #f0f2ff;
-          --color-text-secondary:#a0a8c8;
-          --color-text-muted:    #5a6280;
-          --color-accent-cyan:   #22d3ee;
-          --color-dark-base:     #07080f;
-        }
-
-        /* ── Stat value gradient text ── */
-        .stats-value {
-          font-weight: 800;
-          font-size: 2.5rem;
-          letter-spacing: -0.03em;
-          line-height: 1;
-          margin-bottom: 0.5rem;
-          background: linear-gradient(135deg, #F1F5F9 40%, #22D3EE);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .stats-label {
-          font-family: monospace;
-          font-size: 0.72rem;
-          color: var(--color-text-muted);
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-        }
-
-        /* ── CTA section tag ── */
-        .cta-tag {
-          display: inline-block;
-          font-family: monospace;
-          font-size: 0.7rem;
-          font-weight: 500;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--color-accent-cyan);
-          background: rgba(34, 211, 238, 0.08);
-          border: 1px solid rgba(34, 211, 238, 0.2);
-          padding: 0.3rem 0.75rem;
-          border-radius: 2px;
-          margin-bottom: 1.5rem;
-        }
-
-        /* ── Primary CTA button ── */
-        .cta-btn-primary {
-          font-weight: 700;
-          font-size: 0.95rem;
-          letter-spacing: 0.06em;
-          color: var(--color-dark-base);
-          background: var(--color-accent-cyan);
-          text-decoration: none;
-          padding: 14px 2.25rem;
-          border-radius: 2px;
-          display: inline-block;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .cta-btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 36px rgba(34, 211, 238, 0.3);
-        }
-
-        /* ── Secondary CTA button ── */
-        .cta-btn-secondary {
-          font-weight: 600;
-          font-size: 0.95rem;
-          letter-spacing: 0.05em;
-          color: var(--color-text-secondary);
-          background: transparent;
-          text-decoration: none;
-          padding: 14px 2.25rem;
-          border-radius: 2px;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          display: inline-block;
-          transition: color 0.2s ease, border-color 0.2s ease;
-        }
-        .cta-btn-secondary:hover {
-          color: var(--color-text-primary);
-          border-color: rgba(255, 255, 255, 0.3);
-        }
-      `}</style>
-
-      {/* ── Stats strip ── */}
       <section
         id="analytics"
-        style={{
-          padding: '5rem 2rem',
-          borderTop: '1px solid rgba(255,255,255,0.05)',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-          background: 'var(--color-bg-secondary)',
-        }}
+        className="relative overflow-hidden border-y border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] px-6 py-20 text-[color:var(--color-text-primary)]"
       >
-        <div
-          style={{
-            maxWidth: '1280px',
-            margin: '0 auto',
-            display: 'grid',
-            gap: '2rem',
-            textAlign: 'center',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          }}
-        >
-          {STATS.map((stat, i) => (
+        <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(148,163,184,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.35)_1px,transparent_1px)] [background-size:42px_42px]" />
+
+        <div className="relative mx-auto grid max-w-7xl gap-5 text-center sm:grid-cols-2 xl:grid-cols-4">
+          {STATS.map((stat, index) => (
             <div
               key={stat.label}
-              style={{
-                padding: '1.5rem',
-                borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-              }}
+              className={`rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] px-6 py-8 shadow-[0_20px_60px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--color-border-accent)] ${index !== 0 ? '' : ''
+                }`}
             >
-              <div className="stats-value">{stat.value}</div>
-              <div className="stats-label">{stat.label}</div>
+              <div className="bg-gradient-to-r from-[color:var(--color-text-primary)] via-[color:var(--color-text-primary)] to-[color:var(--color-accent-cyan)] bg-clip-text text-4xl font-extrabold tracking-[-0.04em] text-transparent sm:text-5xl">
+                {stat.value}
+              </div>
+
+              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-text-muted)] sm:text-xs">
+                {stat.label}
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── CTA section ── */}
-      <section
-        style={{
-          padding: '7rem 2rem',
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'var(--color-bg-primary)',
-        }}
-      >
-        {/* Radial glow */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            background: 'radial-gradient(ellipse at 50% 50%, rgba(34,211,238,0.07) 0%, transparent 65%)',
-          }}
-        />
+      <section className="relative overflow-hidden bg-[color:var(--color-bg-primary)] px-6 py-24 text-[color:var(--color-text-primary)]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.10),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.10),transparent_28%)]" />
+        <div className="absolute left-1/2 top-10 h-64 w-64 -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
 
-        <div
-          style={{
-            maxWidth: '720px',
-            margin: '0 auto',
-            textAlign: 'center',
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          <span className="cta-tag">Get Started</span>
+        <div className="relative mx-auto max-w-4xl rounded-[32px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] px-6 py-12 text-center shadow-[0_30px_80px_rgba(15,23,42,0.10)] sm:px-10 sm:py-16">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border-accent)] bg-[color:var(--color-bg-secondary)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[color:var(--color-accent-cyan)]">
+            <span className="h-2 w-2 rounded-full bg-[color:var(--color-accent-cyan)]" />
+            Get Started
+          </div>
 
-          <h2
-            style={{
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
-              color: 'var(--color-text-primary)',
-              lineHeight: 1.1,
-              marginBottom: '1.25rem',
-              fontSize: 'clamp(2rem, 4vw, 3.2rem)',
-            }}
-          >
-            Ready to ship<br />faster?
+          <h2 className="mt-6 text-4xl font-extrabold leading-tight tracking-[-0.03em] sm:text-5xl">
+            Ready to move faster
+            <br />
+            <span className="text-[color:var(--color-text-muted)]">with a clearer workflow?</span>
           </h2>
 
-          <p
-            style={{
-              fontSize: '1rem',
-              color: 'var(--color-text-secondary)',
-              lineHeight: 1.7,
-              maxWidth: '480px',
-              margin: '0 auto 2.5rem',
-            }}
-          >
-            Deploy the full microservice stack in minutes. Your team will be managing
-            projects and tracking tasks within the hour.
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[color:var(--color-text-secondary)] sm:text-lg">
+            Bring projects, tasks, and team coordination into one polished workspace built to help people focus, collaborate, and deliver with confidence.
           </p>
 
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" className="cta-btn-primary">
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.16em] text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(34,211,238,0.28)]"
+            >
               Start Free Trial
             </Link>
-            <Link href="/docs" className="cta-btn-secondary">
+
+            <Link
+              href="/docs"
+              className="inline-flex items-center justify-center rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--color-text-primary)] transition duration-300 hover:-translate-y-0.5 hover:border-[color:var(--color-border-accent)]"
+            >
               View Docs
             </Link>
           </div>

@@ -4,10 +4,10 @@ import Link from 'next/link';
 
 const FOOTER_LINKS = {
   Platform: [
-    { label: 'Auth Service', href: '#services' },
-    { label: 'Projects Service', href: '#services' },
-    { label: 'Tasks Service', href: '#services' },
-    { label: 'Analytics Service', href: '#services' },
+    { label: 'Secure Access', href: '#services' },
+    { label: 'Project Spaces', href: '#services' },
+    { label: 'Task Workflow', href: '#services' },
+    { label: 'Insights & Reporting', href: '#services' },
   ],
   Developers: [
     { label: 'API Reference', href: '/docs/api' },
@@ -32,219 +32,107 @@ const FOOTER_LINKS = {
 const SOCIAL_ICONS = [
   {
     title: 'GitHub',
+    href: '#',
     d: 'M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22',
   },
   {
     title: 'Twitter',
+    href: '#',
     d: 'M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z',
   },
   {
     title: 'LinkedIn',
+    href: '#',
     d: 'M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z M4 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
   },
 ];
 
 export default function Footer() {
   return (
-    <>
-      <style>{`
-        .footer-root {
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
-          background-color: #0d0f1a;
-          padding: 4rem 2rem 2rem;
-        }
+    <footer className="relative overflow-hidden border-t border-[color:var(--color-border)] bg-[color:var(--color-bg-primary)] px-6 pb-8 pt-20 text-[color:var(--color-text-primary)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.08),transparent_24%)]" />
+      <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(148,163,184,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.35)_1px,transparent_1px)] [background-size:42px_42px]" />
 
-        .footer-inner {
-          max-width: 1280px;
-          margin: 0 auto;
-        }
-
-        .footer-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-          gap: 3rem;
-          margin-bottom: 4rem;
-        }
-
-        .footer-brand-name {
-          font-weight: 800;
-          font-size: 1.15rem;
-          letter-spacing: 0.06em;
-          color: #f0f2ff;
-        }
-
-        .footer-brand-desc {
-          font-size: 0.85rem;
-          color: #5a6280;
-          line-height: 1.6;
-          max-width: 200px;
-          margin: 0;
-        }
-
-        .footer-social-link {
-          color: #5a6280;
-          text-decoration: none;
-          line-height: 1;
-          transition: color 0.2s ease;
-          display: inline-flex;
-        }
-        .footer-social-link:hover {
-          color: #22d3ee;
-        }
-
-        .footer-group-label {
-          font-family: monospace;
-          font-size: 0.7rem;
-          font-weight: 500;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: #a0a8c8;
-          margin: 0 0 1.25rem 0;
-        }
-
-        .footer-link-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 0.65rem;
-        }
-
-        .footer-link {
-          font-size: 0.875rem;
-          color: #5a6280;
-          text-decoration: none;
-          transition: color 0.2s ease;
-        }
-        .footer-link:hover {
-          color: #f0f2ff;
-        }
-
-        .footer-divider {
-          height: 1px;
-          background: rgba(255, 255, 255, 0.06);
-          border: none;
-          margin: 0;
-        }
-
-        .footer-bottom {
-          padding-top: 1.5rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 1rem;
-        }
-
-        .footer-copyright {
-          font-family: monospace;
-          font-size: 0.72rem;
-          color: #5a6280;
-          letter-spacing: 0.06em;
-          margin: 0;
-        }
-
-        .footer-status {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .footer-status-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #34d399;
-          display: inline-block;
-          flex-shrink: 0;
-        }
-
-        .footer-status-text {
-          font-family: monospace;
-          font-size: 0.7rem;
-          color: #5a6280;
-          letter-spacing: 0.08em;
-        }
-      `}</style>
-
-      <footer className="footer-root">
-        <div className="footer-inner">
-          {/* Top: logo + links */}
-          <div className="footer-grid">
-            {/* Brand column */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1rem' }}>
-                <div
-                  style={{
-                    width: '1.75rem',
-                    height: '1.75rem',
-                    flexShrink: 0,
-                    background: 'linear-gradient(135deg, #22D3EE, #818CF8)',
-                    clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-                  }}
-                />
-                <span className="footer-brand-name">TaskMaster</span>
+      <div className="relative mx-auto max-w-7xl">
+        <div className="grid gap-12 border-b border-[color:var(--color-border)] pb-12 md:grid-cols-[1.15fr_repeat(4,minmax(0,1fr))]">
+          <div>
+            <Link href="/" className="inline-flex items-center gap-3">
+              <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/20 via-sky-400/10 to-violet-500/20">
+                <div className="h-6 w-6 bg-gradient-to-br from-cyan-300 via-sky-400 to-violet-500 [clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]" />
               </div>
-              <p className="footer-brand-desc">
-                A microservice platform for modern engineering teams.
-              </p>
 
-              {/* Social icons */}
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-                {SOCIAL_ICONS.map((icon) => (
-                  <a
-                    key={icon.title}
-                    href="#"
-                    aria-label={icon.title}
-                    className="footer-social-link"
+              <div className="leading-none">
+                <p className="text-lg font-extrabold tracking-[0.08em] text-[color:var(--color-text-primary)]">
+                  TASKMASTER
+                </p>
+                <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[color:var(--color-text-muted)]">
+                  Workspace
+                </p>
+              </div>
+            </Link>
+
+            <p className="mt-5 max-w-xs text-sm leading-7 text-[color:var(--color-text-secondary)]">
+              A modern workspace for planning projects, managing tasks, and helping teams stay aligned from idea to delivery.
+            </p>
+
+            <div className="mt-6 flex items-center gap-3">
+              {SOCIAL_ICONS.map((icon) => (
+                <a
+                  key={icon.title}
+                  href={icon.href}
+                  aria-label={icon.title}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] text-[color:var(--color-text-secondary)] transition duration-300 hover:-translate-y-0.5 hover:border-[color:var(--color-border-accent)] hover:text-[color:var(--color-accent-cyan)]"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      width="18"
-                      height="18"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d={icon.d} />
-                    </svg>
-                  </a>
-                ))}
-              </div>
+                    <path d={icon.d} />
+                  </svg>
+                </a>
+              ))}
             </div>
-
-            {/* Link columns */}
-            {Object.entries(FOOTER_LINKS).map(([group, links]) => (
-              <div key={group}>
-                <h4 className="footer-group-label">{group}</h4>
-                <ul className="footer-link-list">
-                  {links.map((link) => (
-                    <li key={link.label}>
-                      <Link href={link.href} className="footer-link">
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
           </div>
 
-          <hr className="footer-divider" />
+          {Object.entries(FOOTER_LINKS).map(([group, links]) => (
+            <div key={group}>
+              <h4 className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[color:var(--color-text-muted)]">
+                {group}
+              </h4>
 
-          {/* Bottom bar */}
-          <div className="footer-bottom">
-            <p className="footer-copyright">
-              © {new Date().getFullYear()} TaskMaster Platform. All rights reserved.
-            </p>
-            <div className="footer-status">
-              <span className="footer-status-dot" />
-              <span className="footer-status-text">All systems operational</span>
+              <ul className="mt-5 space-y-3">
+                {links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-[color:var(--color-text-secondary)] transition duration-200 hover:text-[color:var(--color-text-primary)]"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+            © {new Date().getFullYear()} TaskMaster Platform. All rights reserved.
+          </p>
+
+          <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] px-3 py-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-text-secondary)]">
+              All systems operational
+            </span>
           </div>
         </div>
-      </footer>
-    </>
+      </div>
+    </footer>
   );
 }

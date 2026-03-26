@@ -2,246 +2,206 @@
 
 const SERVICES = [
   {
-    id: 'auth', tag: 'SVC-01', name: 'Auth Service', port: ':4001',
-    description: 'Stateless JWT authentication with refresh-token rotation, OAuth2/OIDC provider integration, RBAC, and MFA support. Every service validates tokens independently.',
-    features: ['JWT / Refresh Tokens', 'OAuth2 & OIDC', 'Role-Based Access', 'MFA Ready'],
-    color: '#F59E0B',
-    icon: (<svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>),
+    id: 'access',
+    tag: 'Core 01',
+    name: 'Secure Access',
+    description:
+      'Give every team member a safer and smoother way to sign in, manage access, and work with confidence.',
+    features: ['Protected accounts', 'Role-based access', 'Team permissions', 'Reliable sign-in'],
+    accent: 'amber',
+    icon: (
+      <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+        <rect x="3" y="11" width="18" height="10" rx="2" />
+        <path d="M7 11V8a5 5 0 0 1 10 0v3" />
+      </svg>
+    ),
   },
   {
-    id: 'projects', tag: 'SVC-02', name: 'Projects Service', port: ':4002',
-    description: 'Manage workspaces, projects, and team membership. Supports nested structures, custom fields, and project-level permission overrides on top of global RBAC.',
-    features: ['Nested Workspaces', 'Team Management', 'Custom Fields', 'Permission Layers'],
-    color: '#22D3EE',
-    icon: (<svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>),
+    id: 'projects',
+    tag: 'Core 02',
+    name: 'Project Spaces',
+    description:
+      'Organize teams, initiatives, and ongoing work in one clean environment built for clarity and coordination.',
+    features: ['Shared workspaces', 'Project organization', 'Team visibility', 'Structured planning'],
+    accent: 'cyan',
+    icon: (
+      <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+        <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v8A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-10Z" />
+      </svg>
+    ),
   },
   {
-    id: 'tasks', tag: 'SVC-03', name: 'Tasks Service', port: ':4003',
-    description: 'Full task lifecycle management — create, assign, prioritize, and track work items with sub-tasks, dependencies, labels, and real-time status updates via SSE.',
-    features: ['Sub-tasks & Dependencies', 'Priority Queues', 'Labels & Filters', 'SSE Updates'],
-    color: '#818CF8',
-    icon: (<svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>),
+    id: 'tasks',
+    tag: 'Core 03',
+    name: 'Task Workflow',
+    description:
+      'Create, assign, prioritize, and follow progress with a workflow that keeps delivery moving without extra complexity.',
+    features: ['Clear priorities', 'Ownership tracking', 'Status updates', 'Focused execution'],
+    accent: 'violet',
+    icon: (
+      <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+        <path d="M9 11.5 11.5 14 21 4.5" />
+        <path d="M21 12v6.5A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5v-13A2.5 2.5 0 0 1 5.5 3H16" />
+      </svg>
+    ),
   },
   {
-    id: 'analytics', tag: 'SVC-04', name: 'Analytics Service', port: ':4004',
-    description: 'Aggregates events from all services to power velocity reports, burn-down charts, team throughput, and custom KPI dashboards with flexible time-range queries.',
-    features: ['Velocity Reports', 'Burn-down Charts', 'Team Throughput', 'Custom KPIs'],
-    color: '#34D399',
-    icon: (<svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>),
+    id: 'insights',
+    tag: 'Core 04',
+    name: 'Insights & Reporting',
+    description:
+      'Turn activity into meaningful reporting so teams can see performance, spot trends, and make better decisions faster.',
+    features: ['Progress reporting', 'Team insights', 'Visual trends', 'Decision support'],
+    accent: 'emerald',
+    icon: (
+      <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+        <path d="M4 19h16" />
+        <path d="M7 16V10" />
+        <path d="M12 16V6" />
+        <path d="M17 16v-4" />
+      </svg>
+    ),
   },
 ];
 
+const accentStyles = {
+  amber: {
+    line: 'from-amber-400/70 via-amber-300/60 to-transparent',
+    icon: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+    badge: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    dot: 'bg-amber-500',
+  },
+  cyan: {
+    line: 'from-cyan-400/70 via-sky-400/60 to-transparent',
+    icon: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
+    badge: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    dot: 'bg-cyan-500',
+  },
+  violet: {
+    line: 'from-violet-500/70 via-indigo-400/60 to-transparent',
+    icon: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
+    badge: 'text-violet-600 bg-violet-500/10 border-violet-500/20',
+    dot: 'bg-violet-500',
+  },
+  emerald: {
+    line: 'from-emerald-500/70 via-green-400/60 to-transparent',
+    icon: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    badge: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    dot: 'bg-emerald-500',
+  },
+} as const;
+
 export default function ServicesSection() {
   return (
-    <>
-      <style>{`
-        /* ── Design tokens ── */
-        :root {
-          --color-bg-primary:    #07080f;
-          --color-text-primary:  #f0f2ff;
-          --color-text-secondary:#a0a8c8;
-          --color-text-muted:    #5a6280;
-          --color-accent-cyan:   #22d3ee;
-          --color-accent-violet: #818cf8;
-          --color-accent-amber:  #f59e0b;
-        }
+    <section
+      id="services"
+      className="relative overflow-hidden px-6 py-24 text-[color:var(--color-text-primary)]"
+    >
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,var(--color-bg-primary)_0%,var(--color-bg-secondary)_50%,var(--color-bg-primary)_100%)]" />
+      <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(148,163,184,0.4)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.4)_1px,transparent_1px)] [background-size:48px_48px]" />
+      <div className="absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
+      <div className="absolute bottom-8 right-0 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl" />
 
-        /* ── Section tag / badge ── */
-        .svc-tag {
-          display: inline-block;
-          font-family: monospace;
-          font-size: 0.7rem;
-          font-weight: 500;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--color-accent-cyan);
-          background: rgba(34, 211, 238, 0.08);
-          border: 1px solid rgba(34, 211, 238, 0.2);
-          padding: 0.3rem 0.75rem;
-          border-radius: 2px;
-          margin-bottom: 1.25rem;
-        }
-
-        /* ── Glass card ── */
-        .svc-glass-card {
-          position: relative;
-          overflow: hidden;
-          border-radius: 6px;
-          padding: 2rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          transition: border-color 0.3s ease, background 0.3s ease;
-        }
-        .svc-glass-card:hover {
-          background: rgba(255, 255, 255, 0.05);
-          border-color: rgba(255, 255, 255, 0.12);
-        }
-
-        /* ── Service tag badge (SVC-0X) ── */
-        .svc-id-badge {
-          font-family: monospace;
-          font-size: 0.68rem;
-          color: var(--color-text-muted);
-          letter-spacing: 0.1em;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-          padding: 0.25rem 0.5rem;
-          border-radius: 2px;
-        }
-
-        /* ── Feature chip ── */
-        .svc-chip {
-          font-family: monospace;
-          font-size: 0.68rem;
-          letter-spacing: 0.06em;
-          color: var(--color-text-secondary);
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          padding: 0.2rem 0.5rem;
-          border-radius: 2px;
-        }
-
-        /* ── Architecture note ── */
-        .svc-arch-note {
-          margin-top: 3rem;
-          padding: 1.5rem 2rem;
-          background: rgba(34, 211, 238, 0.04);
-          border: 1px solid rgba(34, 211, 238, 0.12);
-          border-radius: 4px;
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          flex-wrap: wrap;
-        }
-
-        .svc-arch-note p {
-          font-family: monospace;
-          font-size: 0.78rem;
-          color: var(--color-text-secondary);
-          letter-spacing: 0.04em;
-          line-height: 1.6;
-          margin: 0;
-        }
-
-        .svc-arch-note .highlight-cyan   { color: var(--color-accent-cyan); }
-        .svc-arch-note .highlight-violet { color: var(--color-accent-violet); }
-        .svc-arch-note .highlight-amber  { color: var(--color-accent-amber); }
-      `}</style>
-
-      <section
-        id="services"
-        style={{
-          padding: '7rem 2rem',
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'var(--color-bg-primary)',
-        }}
-      >
-        {/* Section glow */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '800px', height: '400px',
-            pointerEvents: 'none',
-            background: 'radial-gradient(ellipse, rgba(129,140,248,0.06) 0%, transparent 70%)',
-          }}
-        />
-
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          {/* Header */}
-          <div style={{ marginBottom: '4rem', maxWidth: '680px' }}>
-            <span className="svc-tag">Architecture</span>
-            <h2 style={{
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
-              color: 'var(--color-text-primary)',
-              lineHeight: 1.1,
-              marginBottom: '1rem',
-              fontSize: 'clamp(2rem, 4vw, 3rem)',
-            }}>
-              Four services.<br />
-              <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>One cohesive platform.</span>
-            </h2>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: 1.7, maxWidth: '520px', margin: 0 }}>
-              Each backend service is independently deployable, scalable, and communicates
-              via well-defined REST APIs — routed through an Application Load Balancer.
-            </p>
+      <div className="relative mx-auto max-w-7xl">
+        <div className="mx-auto mb-16 max-w-3xl text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border-accent)] bg-[color:var(--color-bg-card)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[color:var(--color-accent-cyan)] shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-[color:var(--color-accent-cyan)]" />
+            Platform Services
           </div>
 
-          {/* Service cards grid */}
-          <div style={{ display: 'grid', gap: '1.25rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-            {SERVICES.map((svc) => (
-              <div key={svc.id} className="svc-glass-card">
-                {/* Top color bar */}
-                <div style={{
-                  position: 'absolute', top: 0, left: 0, right: 0,
-                  height: '2px', opacity: 0.8,
-                  background: svc.color,
-                }} />
+          <h2 className="mt-6 text-4xl font-extrabold leading-tight tracking-[-0.03em] sm:text-5xl">
+            Built around the work
+            <br />
+            <span className="text-[color:var(--color-text-muted)]">your team actually does.</span>
+          </h2>
 
-                {/* Header row */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-                  <div style={{
-                    padding: '0.625rem',
-                    borderRadius: '4px',
-                    lineHeight: 1,
-                    color: svc.color,
-                    background: `${svc.color}18`,
-                    border: `1px solid ${svc.color}30`,
-                  }}>
-                    {svc.icon}
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[color:var(--color-text-secondary)] sm:text-lg">
+            Each part of the platform is designed to support planning, execution, visibility, and progress without making the experience feel complicated.
+          </p>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {SERVICES.map((service) => {
+            const accent = accentStyles[service.accent as keyof typeof accentStyles];
+
+            return (
+              <div
+                key={service.id}
+                className="group relative overflow-hidden rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--color-border-accent)]"
+              >
+                <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accent.line}`} />
+
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div
+                    className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl border ${accent.icon}`}
+                  >
+                    {service.icon}
                   </div>
-                  <span className="svc-id-badge">{svc.tag}</span>
-                </div>
 
-                {/* Name & port */}
-                <div style={{ marginBottom: '0.75rem' }}>
-                  <h3 style={{
-                    fontWeight: 700, fontSize: '1.15rem',
-                    color: 'var(--color-text-primary)',
-                    letterSpacing: '0.01em', margin: '0 0 0.125rem',
-                  }}>
-                    {svc.name}
-                  </h3>
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', letterSpacing: '0.05em', opacity: 0.8, color: svc.color }}>
-                    http://internal{svc.port}
+                  <span
+                    className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${accent.badge}`}
+                  >
+                    {service.tag}
                   </span>
                 </div>
 
-                {/* Description */}
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.65, marginBottom: '1.5rem' }}>
-                  {svc.description}
+                <h3 className="text-xl font-semibold tracking-[-0.01em] text-[color:var(--color-text-primary)]">
+                  {service.name}
+                </h3>
+
+                <p className="mt-3 text-sm leading-7 text-[color:var(--color-text-secondary)]">
+                  {service.description}
                 </p>
 
-                {/* Feature chips */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
-                  {svc.features.map((f) => (
-                    <span key={f} className="svc-chip">{f}</span>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {service.features.map((feature) => (
+                    <span
+                      key={feature}
+                      className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-[color:var(--color-text-secondary)]"
+                    >
+                      {feature}
+                    </span>
                   ))}
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
+        </div>
 
-          {/* Architecture note */}
-          <div className="svc-arch-note">
-            <svg width="18" height="18" fill="none" stroke="#22D3EE" strokeWidth="1.8" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <p>
-              <span className="highlight-cyan">ALB</span> routes{' '}
-              <code className="highlight-violet">/</code> to frontend-service &nbsp;|&nbsp;
-              Frontend calls backend services via{' '}
-              <code className="highlight-amber">HTTP REST</code> &nbsp;|&nbsp;
-              All inter-service traffic is internal network only
-            </p>
+        <div className="mt-10 rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+                Why this matters
+              </p>
+              <h3 className="mt-2 text-2xl font-bold tracking-[-0.02em] text-[color:var(--color-text-primary)]">
+                One connected experience, not scattered tools.
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-[color:var(--color-text-secondary)]">
+                From access and planning to execution and reporting, every part works together to keep the workspace cleaner, more reliable, and easier to use.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+              {[
+                { label: 'Structured', accent: 'bg-cyan-500' },
+                { label: 'Reliable', accent: 'bg-violet-500' },
+                { label: 'Scalable', accent: 'bg-emerald-500' },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] px-4 py-4"
+                >
+                  <div className={`mb-3 h-2 w-10 rounded-full ${item.accent}`} />
+                  <p className="text-sm font-semibold text-[color:var(--color-text-primary)]">
+                    {item.label}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

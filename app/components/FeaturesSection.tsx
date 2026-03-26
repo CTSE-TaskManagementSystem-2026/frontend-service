@@ -7,9 +7,9 @@ const FEATURES = [
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
       </svg>
     ),
-    title: 'Real-time Updates',
+    title: 'Live collaboration',
     description:
-      'Server-sent events push live task and project changes to the frontend without polling — zero-delay collaboration across all connected users.',
+      'Stay up to date with changes as work moves forward, so teams can respond faster and keep momentum without confusion.',
   },
   {
     icon: (
@@ -19,9 +19,9 @@ const FEATURES = [
         <line x1="12" y1="17" x2="12" y2="21" />
       </svg>
     ),
-    title: 'Responsive Dashboard',
+    title: 'Responsive workspace',
     description:
-      'A fully adaptive Next.js frontend that renders beautifully across desktop, tablet, and mobile — served from the frontend-service behind the ALB.',
+      'A clean experience across desktop, tablet, and mobile, so projects and tasks stay accessible wherever work happens.',
   },
   {
     icon: (
@@ -29,9 +29,9 @@ const FEATURES = [
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     ),
-    title: 'Zero-trust Auth',
+    title: 'Secure access',
     description:
-      'Every API call is authenticated at the service boundary. The auth-service issues short-lived JWTs — no session state stored server-side.',
+      'Protect accounts and workspace activity with a safer sign-in experience designed to keep team data under control.',
   },
   {
     icon: (
@@ -41,9 +41,9 @@ const FEATURES = [
         <line x1="6" y1="20" x2="6" y2="14" />
       </svg>
     ),
-    title: 'Analytics at a Glance',
+    title: 'Actionable insights',
     description:
-      'The analytics-service computes sprint velocity, cycle time, and throughput. Visualized as interactive charts directly in the dashboard.',
+      'Turn project activity into clear visuals and useful signals that help teams understand progress and make better decisions.',
   },
   {
     icon: (
@@ -54,9 +54,9 @@ const FEATURES = [
         <line x1="6" y1="9" x2="6" y2="21" />
       </svg>
     ),
-    title: 'Modular & Scalable',
+    title: 'Built to grow',
     description:
-      'Each microservice scales horizontally and independently. Deploy more task-service replicas during peak sprints without touching auth or analytics.',
+      'Support small teams today and larger workflows tomorrow with a structure that stays organized as demands increase.',
   },
   {
     icon: (
@@ -71,138 +71,64 @@ const FEATURES = [
         <path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z" />
       </svg>
     ),
-    title: 'API-First Design',
+    title: 'Connected workflows',
     description:
-      'All services expose clean REST APIs documented with OpenAPI 3.0. The frontend consumes them directly — easy to swap or extend any service independently.',
+      'Keep projects, tasks, updates, and reporting working together in one smoother experience instead of scattered tools.',
   },
 ];
 
 export default function FeaturesSection() {
   return (
-    <>
-      <style>{`
-        /* ── Design tokens (shared with other sections) ── */
-        :root {
-          --color-bg-primary:    #07080f;
-          --color-bg-mid:        #0d0e1a;
-          --color-bg-card:       #0a0b17;
-          --color-bg-card-hover: #121328;
-          --color-text-primary:  #f0f2ff;
-          --color-text-secondary:#a0a8c8;
-          --color-text-muted:    #5a6280;
-          --color-accent-cyan:   #22d3ee;
-          --color-border:        rgba(255, 255, 255, 0.06);
-        }
+    <section
+      id="features"
+      className="relative overflow-hidden px-6 py-24 text-[color:var(--color-text-primary)]"
+    >
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,var(--color-bg-primary)_0%,var(--color-bg-secondary)_50%,var(--color-bg-primary)_100%)]" />
+      <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(148,163,184,0.45)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.45)_1px,transparent_1px)] [background-size:44px_44px]" />
+      <div className="absolute left-1/4 top-16 h-44 w-44 rounded-full bg-cyan-400/10 blur-3xl" />
+      <div className="absolute bottom-10 right-0 h-52 w-52 rounded-full bg-violet-500/10 blur-3xl" />
 
-        /* ── Section tag / badge ── */
-        .feat-tag {
-          display: inline-block;
-          font-family: monospace;
-          font-size: 0.7rem;
-          font-weight: 500;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--color-accent-cyan);
-          background: rgba(34, 211, 238, 0.08);
-          border: 1px solid rgba(34, 211, 238, 0.2);
-          padding: 0.3rem 0.75rem;
-          border-radius: 2px;
-          margin-bottom: 1.25rem;
-        }
-
-        /* ── Feature card ── */
-        .feat-card {
-          padding: 2rem;
-          background: var(--color-bg-card);
-          cursor: default;
-          transition: background 0.3s ease;
-        }
-        .feat-card:hover {
-          background: var(--color-bg-card-hover);
-        }
-
-        /* ── Icon wrapper ── */
-        .feat-icon {
-          color: var(--color-accent-cyan);
-          margin-bottom: 1rem;
-          line-height: 1;
-        }
-
-        /* ── Card title ── */
-        .feat-title {
-          font-weight: 700;
-          font-size: 1rem;
-          color: var(--color-text-primary);
-          margin: 0 0 0.5rem;
-          letter-spacing: 0.01em;
-        }
-
-        /* ── Card description ── */
-        .feat-desc {
-          font-size: 0.875rem;
-          color: var(--color-text-secondary);
-          line-height: 1.65;
-          margin: 0;
-        }
-
-        /* ── Section heading muted part ── */
-        .feat-heading-muted {
-          color: var(--color-text-muted);
-          font-weight: 500;
-          font-size: 85%;
-        }
-      `}</style>
-
-      <section
-        id="features"
-        style={{
-          padding: '7rem 2rem',
-          position: 'relative',
-          background: 'linear-gradient(180deg, #07080F 0%, #0D0E1A 50%, #07080F 100%)',
-        }}
-      >
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
-            <span className="feat-tag">Features</span>
-            <h2
-              style={{
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                color: 'var(--color-text-primary)',
-                lineHeight: 1.15,
-                marginBottom: '1rem',
-                fontSize: 'clamp(1.8rem, 3.5vw, 2.75rem)',
-              }}
-            >
-              Everything your team needs.
-              <br />
-              <span className="feat-heading-muted">Nothing it doesn&apos;t.</span>
-            </h2>
+      <div className="relative mx-auto max-w-7xl">
+        <div className="mx-auto mb-16 max-w-3xl text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border-accent)] bg-[color:var(--color-bg-card)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[color:var(--color-accent-cyan)] shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-[color:var(--color-accent-cyan)]" />
+            Features
           </div>
 
-          {/* Features grid */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '1px',
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-              borderRadius: '6px',
-              overflow: 'hidden',
-            }}
-          >
-            {FEATURES.map((feat) => (
-              <div key={feat.title} className="feat-card">
-                <div className="feat-icon">{feat.icon}</div>
-                <h3 className="feat-title">{feat.title}</h3>
-                <p className="feat-desc">{feat.description}</p>
-              </div>
-            ))}
-          </div>
+          <h2 className="mt-6 text-4xl font-extrabold leading-tight tracking-[-0.03em] sm:text-5xl">
+            Everything your team needs.
+            <br />
+            <span className="text-[color:var(--color-text-muted)]">Nothing it doesn&apos;t.</span>
+          </h2>
+
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[color:var(--color-text-secondary)] sm:text-lg">
+            Designed to make planning, coordination, and delivery feel clearer, faster, and more dependable for every team.
+          </p>
         </div>
-      </section>
-    </>
+
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {FEATURES.map((feature) => (
+            <div
+              key={feature.title}
+              className="group relative overflow-hidden rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-7 shadow-[0_24px_70px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--color-border-accent)]"
+            >
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
+
+              <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[color:var(--color-border-accent)] bg-[color:var(--color-bg-secondary)] text-[color:var(--color-accent-cyan)] shadow-sm">
+                {feature.icon}
+              </div>
+
+              <h3 className="text-xl font-semibold tracking-[-0.01em] text-[color:var(--color-text-primary)]">
+                {feature.title}
+              </h3>
+
+              <p className="mt-3 text-sm leading-7 text-[color:var(--color-text-secondary)]">
+                {feature.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

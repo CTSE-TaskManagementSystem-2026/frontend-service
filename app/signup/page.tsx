@@ -3,15 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-
-// Shared field classes resolved via scoped style block
-const labelCls = 'auth-label';
-const inputCls = 'auth-input';
-
-// All auth requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
-
 export default function SignupPage() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,23 +18,45 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password || !form.confirmPassword) { setError('All fields are required.'); return; }
-    if (form.password !== form.confirmPassword) { setError('Passwords do not match.'); return; }
-    if (form.password.length < 8) { setError('Password must be at least 8 characters.'); return; }
-    setError(''); setLoading(true);
+
+    if (!form.name || !form.email || !form.password || !form.confirmPassword) {
+      setError('All fields are required.');
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
     try {
       const res = await fetch('/frontend-api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+        }),
       });
+
       const data = await res.json();
+
       if (!res.ok) {
         setError(data.message || 'Registration failed');
         return;
       }
+
       window.location.href = '/login';
-    } catch (err: unknown) {
+    } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setLoading(false);
@@ -44,7 +64,9 @@ export default function SignupPage() {
   };
 
   const strength = (() => {
-    const p = form.password; if (!p) return 0;
+    const p = form.password;
+    if (!p) return 0;
+
     let s = 0;
     if (p.length >= 8) s++;
     if (/[A-Z]/.test(p)) s++;
@@ -52,243 +74,163 @@ export default function SignupPage() {
     if (/[^A-Za-z0-9]/.test(p)) s++;
     return s;
   })();
+
   const strengthColor = ['transparent', '#EF4444', '#F59E0B', '#22D3EE', '#34D399'][strength];
   const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong'][strength];
 
   return (
-    <>
-      <style>{`
-        /* ── Auth shared tokens ── */
-        .auth-label {
-          display: block;
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.7rem;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #94A3B8;
-          margin-bottom: 0.375rem;
-        }
+    <div className="relative min-h-screen overflow-hidden bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)]">
+      <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(148,163,184,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.35)_1px,transparent_1px)] [background-size:42px_42px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(129,140,248,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.10),transparent_26%)]" />
+      <div className="pointer-events-none absolute left-1/2 top-[28%] h-[320px] w-[620px] -translate-x-1/2 rounded-full bg-violet-500/15 blur-3xl" />
 
-        .auth-input {
-          width: 100%;
-          padding: 0.625rem 0.875rem;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 4px;
-          font-family: 'Manrope', sans-serif;
-          font-size: 0.9rem;
-          color: #F1F5F9;
-          outline: none;
-          transition: border-color 0.2s ease;
-        }
-        .auth-input:focus {
-          border-color: rgba(34, 211, 238, 0.5);
-        }
-        .auth-input::placeholder {
-          color: #475569;
-        }
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[460px]">
+          <Link href="/" className="mb-10 flex items-center justify-center gap-3">
+            <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/20 via-sky-400/10 to-violet-500/20">
+              <div className="h-6 w-6 bg-gradient-to-br from-cyan-300 via-sky-400 to-violet-500 [clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]" />
+            </div>
 
-        /* ── Error banner ── */
-        .auth-error {
-          padding: 0.625rem 0.875rem;
-          background: rgba(239, 68, 68, 0.08);
-          border: 1px solid rgba(239, 68, 68, 0.25);
-          border-radius: 4px;
-          margin-bottom: 1.25rem;
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.75rem;
-          color: #F87171;
-          letter-spacing: 0.04em;
-        }
-
-        /* ── Submit button ── */
-        .signup-submit-btn {
-          width: 100%;
-          padding: 0.75rem;
-          background: #22D3EE;
-          border: none;
-          border-radius: 4px;
-          font-family: 'Syne', sans-serif;
-          font-weight: 700;
-          font-size: 0.9rem;
-          letter-spacing: 0.05em;
-          color: #07080F;
-          cursor: pointer;
-          transition: opacity 0.2s ease;
-        }
-        .signup-submit-btn:hover    { opacity: 0.9; }
-        .signup-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* ── Divider ── */
-        .auth-divider {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          margin: 1.5rem 0;
-        }
-        .auth-divider-line {
-          flex: 1;
-          height: 1px;
-          background: rgba(255, 255, 255, 0.07);
-        }
-        .auth-divider-text {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.68rem;
-          color: #475569;
-          letter-spacing: 0.1em;
-        }
-
-        /* ── Footer links ── */
-        .auth-footer-text {
-          text-align: center;
-          font-family: 'Manrope', sans-serif;
-          font-size: 0.875rem;
-          color: #94A3B8;
-        }
-        .auth-footer-link {
-          color: #22D3EE;
-          text-decoration: none;
-          font-weight: 600;
-        }
-        .auth-terms-text {
-          text-align: center;
-          font-family: 'Manrope', sans-serif;
-          font-size: 0.8rem;
-          color: #475569;
-          margin-top: 1.5rem;
-        }
-        .auth-terms-link {
-          color: #22D3EE;
-          text-decoration: none;
-        }
-      `}</style>
-
-      <div
-        style={{
-          minHeight: '100vh',
-          backgroundColor: '#07080F',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2rem',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Grid background */}
-        <div className="grid-bg absolute inset-0 opacity-50" />
-
-        {/* Glow blob */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '30%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '600px',
-            height: '300px',
-            pointerEvents: 'none',
-            background: 'radial-gradient(ellipse, rgba(129,140,248,0.08) 0%, transparent 70%)',
-          }}
-        />
-
-        <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '460px' }}>
-          {/* Logo */}
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', textDecoration: 'none', marginBottom: '2.5rem', justifyContent: 'center' }}>
-            <div style={{ width: '30px', height: '30px', background: 'linear-gradient(135deg, #22D3EE, #818CF8)', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
-            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '1.3rem', letterSpacing: '0.06em', color: '#F1F5F9' }}>TaskMaster</span>
+            <span className="text-xl font-extrabold tracking-[0.08em] text-[color:var(--color-text-primary)]">
+              TaskMaster
+            </span>
           </Link>
 
-          {/* Card */}
-          <div className="glass-card" style={{ borderRadius: '8px', padding: '2.5rem', background: 'rgba(13,14,26,0.85)' }}>
-            {/* Heading */}
-            <div style={{ marginBottom: '2rem' }}>
-              <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '1.6rem', color: '#F1F5F9', letterSpacing: '-0.01em', marginBottom: '0.375rem' }}>
+          <div className="overflow-hidden rounded-[30px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)]/90 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)] backdrop-blur-2xl sm:p-8">
+            <div className="mb-8">
+              <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border-accent)] bg-[color:var(--color-bg-secondary)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-accent-cyan)]">
+                <span className="h-2 w-2 rounded-full bg-[color:var(--color-accent-cyan)]" />
+                Create workspace account
+              </p>
+
+              <h1 className="text-3xl font-extrabold tracking-[-0.03em] text-[color:var(--color-text-primary)]">
                 Create account
               </h1>
-              <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '0.875rem', color: '#94A3B8' }}>
+
+              <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-secondary)]">
                 Start managing projects in minutes
               </p>
             </div>
 
-            {/* Error */}
-            {error && <div className="auth-error">{error}</div>}
-
-            {/* Name */}
-            <div style={{ marginBottom: '1rem' }}>
-              <label className={labelCls}>Full name</label>
-              <input type="text" placeholder="Jane Smith" value={form.name} onChange={update('name')} className={inputCls} />
-            </div>
-
-            {/* Email */}
-            <div style={{ marginBottom: '1rem' }}>
-              <label className={labelCls}>Work email</label>
-              <input type="email" placeholder="jane@company.com" value={form.email} onChange={update('email')} className={inputCls} />
-            </div>
-
-            {/* Password */}
-            <div style={{ marginBottom: form.password ? '0.5rem' : '1rem' }}>
-              <label className={labelCls}>Password</label>
-              <input type="password" placeholder="Min. 8 characters" value={form.password} onChange={update('password')} className={inputCls} />
-            </div>
-
-            {/* Password strength */}
-            {form.password && (
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      style={{
-                        flex: 1,
-                        height: '3px',
-                        borderRadius: '2px',
-                        transition: 'background 0.3s ease',
-                        background: i <= strength ? strengthColor : 'rgba(255,255,255,0.08)',
-                      }}
-                    />
-                  ))}
-                </div>
-                <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem', letterSpacing: '0.08em', color: strengthColor }}>
-                  {strengthLabel}
-                </span>
+            {error && (
+              <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium tracking-[0.04em] text-red-300">
+                {error}
               </div>
             )}
 
-            {/* Confirm password */}
-            <div style={{ marginBottom: '1.75rem' }}>
-              <label className={labelCls}>Confirm password</label>
-              <input type="password" placeholder="Repeat password" value={form.confirmPassword} onChange={update('confirmPassword')} className={inputCls} />
+            <div className="space-y-5">
+              <div>
+                <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
+                  Full name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Jane Smith"
+                  value={form.name}
+                  onChange={update('name')}
+                  className="w-full rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] px-4 py-3 text-sm text-[color:var(--color-text-primary)] outline-none transition duration-200 placeholder:text-[color:var(--color-text-muted)] focus:border-[color:var(--color-border-accent)]"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
+                  Work email
+                </label>
+                <input
+                  type="email"
+                  placeholder="jane@company.com"
+                  value={form.email}
+                  onChange={update('email')}
+                  className="w-full rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] px-4 py-3 text-sm text-[color:var(--color-text-primary)] outline-none transition duration-200 placeholder:text-[color:var(--color-text-muted)] focus:border-[color:var(--color-border-accent)]"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="Min. 8 characters"
+                  value={form.password}
+                  onChange={update('password')}
+                  className="w-full rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] px-4 py-3 text-sm text-[color:var(--color-text-primary)] outline-none transition duration-200 placeholder:text-[color:var(--color-text-muted)] focus:border-[color:var(--color-border-accent)]"
+                />
+              </div>
+
+              {form.password && (
+                <div className="-mt-1">
+                  <div className="mb-2 flex gap-1">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="h-1 flex-1 rounded-full transition-all duration-300"
+                        style={{
+                          background: i <= strength ? strengthColor : 'rgba(255,255,255,0.08)',
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-[0.14em]"
+                    style={{ color: strengthColor }}
+                  >
+                    {strengthLabel}
+                  </span>
+                </div>
+              )}
+
+              <div>
+                <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
+                  Confirm password
+                </label>
+                <input
+                  type="password"
+                  placeholder="Repeat password"
+                  value={form.confirmPassword}
+                  onChange={update('confirmPassword')}
+                  className="w-full rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] px-4 py-3 text-sm text-[color:var(--color-text-primary)] outline-none transition duration-200 placeholder:text-[color:var(--color-text-muted)] focus:border-[color:var(--color-border-accent)]"
+                />
+              </div>
             </div>
 
-            {/* Submit */}
-            <button onClick={handleSubmit} disabled={loading} className="signup-submit-btn">
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="mt-7 w-full rounded-2xl bg-cyan-400 px-4 py-3.5 text-sm font-semibold uppercase tracking-[0.16em] text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(34,211,238,0.24)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+            >
               {loading ? 'Creating account…' : 'Create Account'}
             </button>
 
-            {/* Terms */}
-            <p className="auth-terms-text">
+            <p className="mt-6 text-center text-sm leading-7 text-[color:var(--color-text-secondary)]">
               By signing up you agree to our{' '}
-              <Link href="/terms" className="auth-terms-link">Terms</Link>
-              {' '}and{' '}
-              <Link href="/privacy" className="auth-terms-link">Privacy Policy</Link>
+              <Link href="/terms" className="font-semibold text-[color:var(--color-accent-cyan)]">
+                Terms
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="font-semibold text-[color:var(--color-accent-cyan)]">
+                Privacy Policy
+              </Link>
             </p>
 
-            {/* Divider */}
-            <div className="auth-divider">
-              <div className="auth-divider-line" />
-              <span className="auth-divider-text">OR</span>
-              <div className="auth-divider-line" />
+            <div className="my-7 flex items-center gap-4">
+              <div className="h-px flex-1 bg-[color:var(--color-border)]" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
+                OR
+              </span>
+              <div className="h-px flex-1 bg-[color:var(--color-border)]" />
             </div>
 
-            {/* Sign in link */}
-            <p className="auth-footer-text">
+            <p className="text-center text-sm text-[color:var(--color-text-secondary)]">
               Already have an account?{' '}
-              <Link href="/login" className="auth-footer-link">Sign in</Link>
+              <Link href="/login" className="font-semibold text-[color:var(--color-accent-cyan)]">
+                Sign in
+              </Link>
             </p>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

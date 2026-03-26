@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-interface Props { token: string; }
+interface Props {
+    token: string;
+}
 
 interface Project {
     _id: string;
@@ -16,13 +18,27 @@ interface Project {
 }
 
 const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
-    active: { color: '#34d399', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.2)' },
-    inactive: { color: '#94a3b8', bg: 'rgba(148,163,184,0.08)', border: 'rgba(148,163,184,0.2)' },
-    archived: { color: '#475569', bg: 'rgba(71,85,105,0.08)', border: 'rgba(71,85,105,0.2)' },
-    completed: { color: '#818cf8', bg: 'rgba(129,140,248,0.08)', border: 'rgba(129,140,248,0.2)' },
+    active: {
+        color: '#34d399',
+        bg: 'rgba(52,211,153,0.10)',
+        border: 'rgba(52,211,153,0.24)',
+    },
+    inactive: {
+        color: '#94a3b8',
+        bg: 'rgba(148,163,184,0.10)',
+        border: 'rgba(148,163,184,0.24)',
+    },
+    archived: {
+        color: '#f59e0b',
+        bg: 'rgba(245,158,11,0.10)',
+        border: 'rgba(245,158,11,0.24)',
+    },
+    completed: {
+        color: '#818cf8',
+        bg: 'rgba(129,140,248,0.10)',
+        border: 'rgba(129,140,248,0.24)',
+    },
 };
-
-// All project requests go through our own Next.js backend route — no NEXT_PUBLIC_ needed
 
 export default function ProjectsTab({ token }: Props) {
     const auth = `Bearer ${token}`;
@@ -33,9 +49,13 @@ export default function ProjectsTab({ token }: Props) {
     const [deletingId, setDeletingId] = useState('');
 
     const fetchProjects = useCallback(async () => {
-        setLoading(true); setError('');
+        setLoading(true);
+        setError('');
+
         try {
-            const res = await fetch('/frontend-api/projects/admin', { headers: { Authorization: auth } });
+            const res = await fetch('/frontend-api/projects/admin', {
+                headers: { Authorization: auth },
+            });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || data.error || 'Failed to fetch');
             setProjects(Array.isArray(data.projects) ? data.projects : []);
@@ -46,18 +66,26 @@ export default function ProjectsTab({ token }: Props) {
         }
     }, [auth]);
 
-    useEffect(() => { fetchProjects(); }, [fetchProjects]);
+    useEffect(() => {
+        fetchProjects();
+    }, [fetchProjects]);
 
     const handleDelete = async (id: string, name: string) => {
         if (!confirm(`Delete project "${name}"? This cannot be undone.`)) return;
+
         setDeletingId(id);
         try {
-            const res = await fetch(`/frontend-api/projects/admin?id=${encodeURIComponent(id)}`, {
-                method: 'DELETE',
-                headers: { Authorization: auth },
-            });
-            if (res.ok) setProjects((prev) => prev.filter((p) => p._id !== id));
-            else {
+            const res = await fetch(
+                `/frontend-api/projects/admin?id=${encodeURIComponent(id)}`,
+                {
+                    method: 'DELETE',
+                    headers: { Authorization: auth },
+                }
+            );
+
+            if (res.ok) {
+                setProjects((prev) => prev.filter((p) => p._id !== id));
+            } else {
                 const data = await res.json();
                 setError(data.message || data.error || 'Delete failed');
             }
@@ -71,166 +99,140 @@ export default function ProjectsTab({ token }: Props) {
     );
 
     return (
-        <>
-            <style>{`
-        .proj-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 1.5rem;
-          gap: 1rem;
-          flex-wrap: wrap;
-        }
-        .proj-search {
-          padding: 0.5rem 0.875rem;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 4px;
-          font-family: 'Manrope', sans-serif;
-          font-size: 0.875rem;
-          color: #f1f5f9;
-          outline: none;
-          width: 260px;
-          transition: border-color 0.2s ease;
-        }
-        .proj-search:focus        { border-color: rgba(34,211,238,0.4); }
-        .proj-search::placeholder { color: #475569; }
-
-        .proj-table { width: 100%; border-collapse: collapse; }
-        .proj-table th {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.65rem;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #475569;
-          text-align: left;
-          padding: 0.625rem 1rem;
-          border-bottom: 1px solid rgba(255,255,255,0.07);
-          white-space: nowrap;
-        }
-        .proj-table td {
-          padding: 0.875rem 1rem;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
-          font-family: 'Manrope', sans-serif;
-          font-size: 0.875rem;
-          color: #94a3b8;
-          vertical-align: middle;
-        }
-        .proj-table tr:last-child td { border-bottom: none; }
-        .proj-table tr:hover td     { background: rgba(255,255,255,0.02); }
-
-        .status-badge {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.62rem;
-          letter-spacing: 0.08em;
-          padding: 2px 8px;
-          border-radius: 2px;
-          text-transform: uppercase;
-        }
-        .proj-delete-btn {
-          padding: 0.35rem 0.75rem;
-          background: transparent;
-          border: 1px solid rgba(239,68,68,0.3);
-          border-radius: 2px;
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.62rem;
-          letter-spacing: 0.06em;
-          color: #ef4444;
-          cursor: pointer;
-          transition: background 0.2s ease;
-        }
-        .proj-delete-btn:hover    { background: rgba(239,68,68,0.1); }
-        .proj-delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-      `}</style>
-
-            <div className="proj-header">
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1rem', color: '#f1f5f9' }}>
-                    Projects
-                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem', color: '#475569', marginLeft: '0.75rem', letterSpacing: '0.08em' }}>
-                        {projects.length} TOTAL
-                    </span>
+        <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
+                        Project Registry
+                    </p>
+                    <div className="mt-2 flex items-center gap-3">
+                        <h3 className="text-2xl font-extrabold tracking-[-0.03em] text-[color:var(--color-text-primary)]">
+                            Projects
+                        </h3>
+                        <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-violet-400">
+                            {projects.length} total
+                        </span>
+                    </div>
                 </div>
-                <input
-                    type="text"
-                    placeholder="Search by name…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="proj-search"
-                />
+
+                <div className="relative w-full sm:w-[280px]">
+                    <svg
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--color-text-muted)]"
+                    >
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+
+                    <input
+                        type="text"
+                        placeholder="Search by name…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] py-3 pl-11 pr-4 text-sm text-[color:var(--color-text-primary)] outline-none transition duration-200 placeholder:text-[color:var(--color-text-muted)] focus:border-[color:var(--color-border-accent)]"
+                    />
+                </div>
             </div>
 
             {error && (
-                <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.75rem', color: '#f87171', marginBottom: '1rem' }}>
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                     {error}
                 </div>
             )}
 
-            <div style={{ background: '#0d0f1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', overflow: 'hidden' }}>
+            <div className="overflow-hidden rounded-[30px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
                 {loading ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.72rem', color: '#475569', letterSpacing: '0.1em' }}>
-                        LOADING PROJECTS…
+                    <div className="px-6 py-16 text-center font-mono text-xs uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+                        Loading projects…
                     </div>
                 ) : filtered.length === 0 ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.72rem', color: '#475569', letterSpacing: '0.1em' }}>
-                        NO PROJECTS FOUND
+                    <div className="px-6 py-16 text-center font-mono text-xs uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+                        No projects found
                     </div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="proj-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Status</th>
-                                    <th>Tasks</th>
-                                    <th>Due Date</th>
-                                    <th>Created</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filtered.map((p) => {
-                                    const s = STATUS_STYLE[p.status] ?? STATUS_STYLE.inactive;
-                                    return (
-                                        <tr key={p._id}>
-                                            <td>
-                                                <div style={{ color: '#f1f5f9', fontWeight: 500 }}>{p.name}</div>
-                                                {p.description && (
-                                                    <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '2px' }}>
-                                                        {p.description.slice(0, 60)}{p.description.length > 60 ? '…' : ''}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span className="status-badge" style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
-                                                    {p.status}
-                                                </span>
-                                            </td>
-                                            <td style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.78rem' }}>
-                                                {p.tasksCount ?? 0}
-                                            </td>
-                                            <td style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.7rem' }}>
-                                                {p.dueDate ? new Date(p.dueDate).toLocaleDateString() : '—'}
-                                            </td>
-                                            <td style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.7rem' }}>
-                                                {new Date(p.createdAt).toLocaleDateString()}
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="proj-delete-btn"
-                                                    disabled={deletingId === p._id}
-                                                    onClick={() => handleDelete(p._id, p.name)}
-                                                >
-                                                    {deletingId === p._id ? '…' : 'DELETE'}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                    <div className="overflow-x-auto">
+                        <div className="min-w-[900px]">
+                            <div className="grid grid-cols-[minmax(260px,1.6fr)_130px_90px_140px_140px_110px] gap-4 border-b border-[color:var(--color-border)] px-6 py-4">
+                                {['Name', 'Status', 'Tasks', 'Due Date', 'Created', 'Action'].map((h) => (
+                                    <span
+                                        key={h}
+                                        className="font-mono text-[11px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]"
+                                    >
+                                        {h}
+                                    </span>
+                                ))}
+                            </div>
+
+                            {filtered.map((p, index) => {
+                                const s = STATUS_STYLE[p.status] ?? STATUS_STYLE.inactive;
+
+                                return (
+                                    <div
+                                        key={p._id}
+                                        className={`grid grid-cols-[minmax(260px,1.6fr)_130px_90px_140px_140px_110px] items-center gap-4 px-6 py-4 transition duration-150 hover:bg-white/[0.02] ${index < filtered.length - 1
+                                                ? 'border-b border-[color:var(--color-border)]'
+                                                : ''
+                                            }`}
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="truncate text-sm font-semibold text-[color:var(--color-text-primary)]">
+                                                {p.name}
+                                            </div>
+
+                                            {p.description && (
+                                                <div className="mt-1 truncate text-sm text-[color:var(--color-text-muted)]">
+                                                    {p.description.slice(0, 60)}
+                                                    {p.description.length > 60 ? '…' : ''}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <span
+                                                className="inline-flex rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+                                                style={{
+                                                    color: s.color,
+                                                    background: s.bg,
+                                                    borderColor: s.border,
+                                                }}
+                                            >
+                                                {p.status}
+                                            </span>
+                                        </div>
+
+                                        <span className="font-mono text-xs text-[color:var(--color-text-secondary)]">
+                                            {p.tasksCount ?? 0}
+                                        </span>
+
+                                        <span className="font-mono text-xs text-[color:var(--color-text-secondary)]">
+                                            {p.dueDate ? new Date(p.dueDate).toLocaleDateString() : '—'}
+                                        </span>
+
+                                        <span className="font-mono text-xs text-[color:var(--color-text-secondary)]">
+                                            {new Date(p.createdAt).toLocaleDateString()}
+                                        </span>
+
+                                        <div>
+                                            <button
+                                                disabled={deletingId === p._id}
+                                                onClick={() => handleDelete(p._id, p.name)}
+                                                className="rounded-xl border border-red-500/30 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-red-400 transition duration-200 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40"
+                                            >
+                                                {deletingId === p._id ? '…' : 'Delete'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
             </div>
-        </>
+        </div>
     );
 }

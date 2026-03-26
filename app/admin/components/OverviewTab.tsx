@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
-interface Props { token: string; }
+interface Props {
+    token: string;
+}
 
 interface Summary {
     totalUsers: number;
@@ -10,8 +12,6 @@ interface Summary {
     totalTasks: number;
     activeProjects: number;
 }
-
-// All requests go through our own Next.js backend routes — no NEXT_PUBLIC_ needed
 
 export default function OverviewTab({ token }: Props) {
     const auth = `Bearer ${token}`;
@@ -23,13 +23,21 @@ export default function OverviewTab({ token }: Props) {
         async function load() {
             try {
                 const [usersRes, projRes, tasksRes] = await Promise.all([
-                    fetch('/frontend-api/auth/admin', { headers: { Authorization: auth } }),
-                    fetch('/frontend-api/projects/admin', { headers: { Authorization: auth } }),
-                    fetch('/frontend-api/tasks/admin', { headers: { Authorization: auth } }),
+                    fetch('/frontend-api/auth/admin', {
+                        headers: { Authorization: auth },
+                    }),
+                    fetch('/frontend-api/projects/admin', {
+                        headers: { Authorization: auth },
+                    }),
+                    fetch('/frontend-api/tasks/admin', {
+                        headers: { Authorization: auth },
+                    }),
                 ]);
 
                 const usersData = usersRes.ok ? await usersRes.json() : { users: [] };
-                const projData = projRes.ok ? await projRes.json() : { projects: [], summary: {} };
+                const projData = projRes.ok
+                    ? await projRes.json()
+                    : { projects: [], summary: {} };
                 const tasksData = tasksRes.ok ? await tasksRes.json() : [];
 
                 setSummary({
@@ -44,112 +52,121 @@ export default function OverviewTab({ token }: Props) {
                 setLoading(false);
             }
         }
+
         load();
     }, [auth]);
 
-    const STATS = summary ? [
-        { label: 'Total Users', value: summary.totalUsers, icon: '⬡', color: '#22d3ee' },
-        { label: 'Total Projects', value: summary.totalProjects, icon: '▣', color: '#818cf8' },
-        { label: 'Active Projects', value: summary.activeProjects, icon: '◈', color: '#34d399' },
-        { label: 'Total Tasks', value: summary.totalTasks, icon: '◇', color: '#f59e0b' },
-    ] : [];
+    const STATS = summary
+        ? [
+            {
+                label: 'Total Users',
+                value: summary.totalUsers,
+                icon: '⬡',
+                color: '#22d3ee',
+            },
+            {
+                label: 'Total Projects',
+                value: summary.totalProjects,
+                icon: '▣',
+                color: '#818cf8',
+            },
+            {
+                label: 'Active Projects',
+                value: summary.activeProjects,
+                icon: '◈',
+                color: '#34d399',
+            },
+            {
+                label: 'Total Tasks',
+                value: summary.totalTasks,
+                icon: '◇',
+                color: '#f59e0b',
+            },
+        ]
+        : [];
 
     return (
-        <>
-            <style>{`
-        .ov-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 1rem;
-          margin-bottom: 2rem;
-        }
-        @media (max-width: 900px) { .ov-grid { grid-template-columns: repeat(2,1fr); } }
-        @media (max-width: 500px) { .ov-grid { grid-template-columns: 1fr; } }
-
-        .ov-card {
-          background: #0d0f1a;
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 6px;
-          padding: 1.5rem;
-          position: relative;
-          overflow: hidden;
-        }
-        .ov-card-icon {
-          font-size: 1.4rem;
-          margin-bottom: 0.75rem;
-        }
-        .ov-card-value {
-          font-family: 'Syne', sans-serif;
-          font-weight: 800;
-          font-size: 2.2rem;
-          color: #f1f5f9;
-          line-height: 1;
-          margin-bottom: 0.375rem;
-        }
-        .ov-card-label {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.65rem;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #475569;
-        }
-        .ov-card-bar {
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 2px;
-        }
-        .ov-section-title {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 0.68rem;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: #475569;
-          margin-bottom: 1rem;
-        }
-      `}</style>
-
+        <div className="space-y-6">
             {loading && (
-                <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.1em' }}>
-                    LOADING OVERVIEW…
+                <div className="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] px-6 py-10 text-center font-mono text-xs uppercase tracking-[0.18em] text-[color:var(--color-text-muted)] shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+                    Loading overview…
                 </div>
             )}
 
             {error && (
-                <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.75rem', color: '#f87171' }}>
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                     {error}
                 </div>
             )}
 
             {!loading && summary && (
                 <>
-                    <div className="ov-grid">
+                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         {STATS.map((s) => (
-                            <div key={s.label} className="ov-card">
-                                <div className="ov-card-bar" style={{ background: s.color }} />
-                                <div className="ov-card-icon" style={{ color: s.color }}>{s.icon}</div>
-                                <div className="ov-card-value">{s.value}</div>
-                                <div className="ov-card-label">{s.label}</div>
+                            <div
+                                key={s.label}
+                                className="relative overflow-hidden rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--color-border-accent)]"
+                            >
+                                <div
+                                    className="absolute inset-x-0 top-0 h-[3px]"
+                                    style={{ background: s.color }}
+                                />
+
+                                <div
+                                    className="mb-4 text-2xl leading-none"
+                                    style={{ color: s.color }}
+                                >
+                                    {s.icon}
+                                </div>
+
+                                <div className="text-4xl font-extrabold tracking-[-0.04em] text-[color:var(--color-text-primary)] sm:text-5xl">
+                                    {s.value}
+                                </div>
+
+                                <div className="mt-3 font-mono text-[11px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                                    {s.label}
+                                </div>
                             </div>
                         ))}
                     </div>
 
-                    <div style={{ background: '#0d0f1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', padding: '1.5rem' }}>
-                        <div className="ov-section-title">System Status</div>
-                        {[
-                            { label: 'Auth Service', status: 'Operational' },
-                            { label: 'Projects Service', status: 'Operational' },
-                            { label: 'Tasks Service', status: 'Operational' },
-                        ].map((s) => (
-                            <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                                <span style={{ fontFamily: 'Manrope, sans-serif', fontSize: '0.875rem', color: '#94a3b8' }}>{s.label}</span>
-                                <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem', letterSpacing: '0.08em', color: '#34d399', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', padding: '2px 8px', borderRadius: '2px' }}>
-                                    {s.status}
-                                </span>
-                            </div>
-                        ))}
+                    <div className="overflow-hidden rounded-[30px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
+                        <div className="border-b border-[color:var(--color-border)] px-6 py-5">
+                            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
+                                System Status
+                            </p>
+                            <h3 className="mt-2 text-2xl font-bold tracking-[-0.02em] text-[color:var(--color-text-primary)]">
+                                Service health overview
+                            </h3>
+                        </div>
+
+                        <div className="px-6 py-2">
+                            {[
+                                { label: 'Auth Service', status: 'Operational' },
+                                { label: 'Projects Service', status: 'Operational' },
+                                { label: 'Tasks Service', status: 'Operational' },
+                            ].map((s, index, arr) => (
+                                <div
+                                    key={s.label}
+                                    className={`flex items-center justify-between gap-4 py-4 ${index < arr.length - 1
+                                            ? 'border-b border-[color:var(--color-border)]'
+                                            : ''
+                                        }`}
+                                >
+                                    <span className="text-sm font-medium text-[color:var(--color-text-secondary)]">
+                                        {s.label}
+                                    </span>
+
+                                    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-500">
+                                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                        {s.status}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </>
             )}
-        </>
+        </div>
     );
 }

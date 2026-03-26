@@ -1,0 +1,981 @@
+openapi: 3.0.3
+
+info:
+  title: Frontend Service API
+  version: 1.0.0
+  description: >
+    BFF (Backend-For-Frontend) API contract for the Task Management System
+    frontend service. All routes live under the `/frontend-api` prefix and
+    act as server-side proxies to the internal microservices (auth-service,
+    projects-service, tasks-service). Auth is enforced via a JWT Bearer token
+    issued at login.
+
+servers:
+  - url: http://taskapp-alb-1388462037.eu-north-1.elb.amazonaws.com
+    description: AWS ALB – production
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Security
+# ─────────────────────────────────────────────────────────────────────────────
+security:
+  - BearerAuth: []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Paths
+# ─────────────────────────────────────────────────────────────────────────────
+paths:
+
+  # ── Health ──────────────────────────────────────────────────────────────────
+  /frontend-api/health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns a simple liveness indicator for the frontend service.
+      security: []          # public – no auth required
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: ok
+
+  # ── Auth – Login ─────────────────────────────────────────────────────────────
+  /frontend-api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Authenticate a user
+      description: >
+        Proxies credentials to the auth-service and returns a signed JWT plus
+        the user's role on success.
+      security: []          # public – no token required
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: john.doe@example.com
+              password: S3cureP@ss!
+      responses:
+        '200':
+          description: Login successful – JWT returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NDE...
+                role: user
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── Auth – Register ──────────────────────────────────────────────────────────
+  /frontend-api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      description: Creates a new account in the auth-service.
+      security: []
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              name: John Doe
+              email: john.doe@example.com
+              password: S3cureP@ss!
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              example:
+                message: User registered successfully
+                userId: 64b1f2e3c9d4a50012abcd01
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: Email already registered
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── Auth – User Profile ───────────────────────────────────────────────────────
+  /frontend-api/auth/users:
+    get:
+      tags:
+        - Auth
+      summary: Get current user profile
+      description: Returns the authenticated user's profile fetched from auth-service.
+      operationId: getUserProfile
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+      responses:
+        '200':
+          description: User profile returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+              example:
+                id: 64b1f2e3c9d4a50012abcd01
+                name: John Doe
+                email: john.doe@example.com
+                role: user
+                bio: Full-stack developer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+    put:
+      tags:
+        - Auth
+      summary: Update current user profile or password
+      description: >
+        Updates the authenticated user's profile (name, email, bio) or changes
+        password (currentPassword + newPassword).
+      operationId: updateUserProfile
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+            examples:
+              updateInfo:
+                summary: Update profile info
+                value:
+                  name: Jane Doe
+                  email: jane.doe@example.com
+                  bio: DevOps enthusiast
+              changePassword:
+                summary: Change password
+                value:
+                  currentPassword: OldP@ss1
+                  newPassword: NewP@ss2
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── Auth – Admin (User Management) ───────────────────────────────────────────
+  /frontend-api/auth/admin:
+    get:
+      tags:
+        - Admin – Auth
+      summary: List all users (admin only)
+      description: Returns the full user list. Requires the `admin` role.
+      operationId: adminListUsers
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+      responses:
+        '200':
+          description: Array of user objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserProfile'
+              example:
+                - id: 64b1f2e3c9d4a50012abcd01
+                  name: John Doe
+                  email: john.doe@example.com
+                  role: user
+                  bio: ''
+                - id: 64b1f2e3c9d4a50012abcd02
+                  name: Admin User
+                  email: admin@example.com
+                  role: admin
+                  bio: System administrator
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+    put:
+      tags:
+        - Admin – Auth
+      summary: Update a user's role (admin only)
+      description: Toggles a user's role between `user` and `admin`.
+      operationId: adminUpdateUserRole
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateRoleRequest'
+            example:
+              userId: 64b1f2e3c9d4a50012abcd01
+              role: admin
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+    delete:
+      tags:
+        - Admin – Auth
+      summary: Delete a user by ID (admin only)
+      description: Permanently removes the user with the given `userId`.
+      operationId: adminDeleteUser
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+        - name: userId
+          in: query
+          required: true
+          description: MongoDB ObjectId of the user to delete
+          schema:
+            type: string
+            example: 64b1f2e3c9d4a50012abcd01
+      responses:
+        '204':
+          description: User deleted – no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── Projects – User ───────────────────────────────────────────────────────────
+  /frontend-api/projects/user:
+    get:
+      tags:
+        - Projects
+      summary: List projects for the current user
+      description: Returns all projects belonging to the authenticated user.
+      operationId: getUserProjects
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+      responses:
+        '200':
+          description: Array of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+              example:
+                - id: 64c3a1e5d9b4a60023bcde01
+                  name: CTSE Assignment
+                  description: Cloud-native task manager
+                  ownerId: 64b1f2e3c9d4a50012abcd01
+                  taskCount: 5
+                  createdAt: '2024-07-19T10:00:00.000Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+    post:
+      tags:
+        - Projects
+      summary: Create a new project
+      description: Creates a project owned by the authenticated user.
+      operationId: createProject
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+            example:
+              name: CTSE Assignment
+              description: Cloud-native task manager
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+              example:
+                id: 64c3a1e5d9b4a60023bcde01
+                name: CTSE Assignment
+                description: Cloud-native task manager
+                ownerId: 64b1f2e3c9d4a50012abcd01
+                taskCount: 0
+                createdAt: '2024-07-19T10:00:00.000Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+    delete:
+      tags:
+        - Projects
+      summary: Delete a project (owner)
+      description: Deletes the project with the given `id` owned by the current user.
+      operationId: deleteUserProject
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+        - name: id
+          in: query
+          required: true
+          description: MongoDB ObjectId of the project to delete
+          schema:
+            type: string
+            example: 64c3a1e5d9b4a60023bcde01
+      responses:
+        '204':
+          description: Project deleted – no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── Projects – Admin ──────────────────────────────────────────────────────────
+  /frontend-api/projects/admin:
+    get:
+      tags:
+        - Admin – Projects
+      summary: List all projects (admin only)
+      description: Returns every project in the system regardless of owner.
+      operationId: adminListProjects
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+      responses:
+        '200':
+          description: Array of all projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+    delete:
+      tags:
+        - Admin – Projects
+      summary: Delete any project by ID (admin only)
+      description: Permanently removes the project with the given `id`.
+      operationId: adminDeleteProject
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+        - name: id
+          in: query
+          required: true
+          description: MongoDB ObjectId of the project to delete
+          schema:
+            type: string
+            example: 64c3a1e5d9b4a60023bcde01
+      responses:
+        '204':
+          description: Project deleted – no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── Tasks – User ──────────────────────────────────────────────────────────────
+  /frontend-api/tasks/user:
+    get:
+      tags:
+        - Tasks
+      summary: List tasks for the current user
+      description: Returns all tasks assigned to or created by the authenticated user.
+      operationId: getUserTasks
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+      responses:
+        '200':
+          description: Array of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+              example:
+                - id: 64d4b2f6ea5a70034cdef01
+                  title: Set up CI/CD pipeline
+                  description: Configure GitHub Actions for the monorepo
+                  projectId: 64c3a1e5d9b4a60023bcde01
+                  status: IN_PROGRESS
+                  priority: high
+                  createdAt: '2024-07-20T08:30:00.000Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+    post:
+      tags:
+        - Tasks
+      summary: Create a new task
+      description: Creates a task under the specified project.
+      operationId: createTask
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+            example:
+              title: Set up CI/CD pipeline
+              description: Configure GitHub Actions for the monorepo
+              projectId: 64c3a1e5d9b4a60023bcde01
+              priority: high
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: 64d4b2f6ea5a70034cdef01
+                title: Set up CI/CD pipeline
+                description: Configure GitHub Actions for the monorepo
+                projectId: 64c3a1e5d9b4a60023bcde01
+                status: TODO
+                priority: high
+                createdAt: '2024-07-20T08:30:00.000Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+    patch:
+      tags:
+        - Tasks
+      summary: Update a task (status, priority, etc.)
+      description: Partially updates the task identified by the `id` query parameter.
+      operationId: updateTask
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+        - name: id
+          in: query
+          required: true
+          description: MongoDB ObjectId of the task to update
+          schema:
+            type: string
+            example: 64d4b2f6ea5a70034cdef01
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+            examples:
+              changeStatus:
+                summary: Change task status
+                value:
+                  status: IN_REVIEW
+              changePriority:
+                summary: Change priority
+                value:
+                  priority: low
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+    delete:
+      tags:
+        - Tasks
+      summary: Delete a task (owner)
+      description: Deletes the task identified by the `id` query parameter.
+      operationId: deleteUserTask
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+        - name: id
+          in: query
+          required: true
+          description: MongoDB ObjectId of the task to delete
+          schema:
+            type: string
+            example: 64d4b2f6ea5a70034cdef01
+      responses:
+        '204':
+          description: Task deleted – no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── Tasks – Admin ─────────────────────────────────────────────────────────────
+  /frontend-api/tasks/admin:
+    get:
+      tags:
+        - Admin – Tasks
+      summary: List all tasks (admin only)
+      description: Returns every task in the system regardless of owner or project.
+      operationId: adminListTasks
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+      responses:
+        '200':
+          description: Array of all tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+    delete:
+      tags:
+        - Admin – Tasks
+      summary: Delete any task by ID (admin only)
+      description: Permanently removes the task with the given `id`.
+      operationId: adminDeleteTask
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationHeader'
+        - name: id
+          in: query
+          required: true
+          description: MongoDB ObjectId of the task to delete
+          schema:
+            type: string
+            example: 64d4b2f6ea5a70034cdef01
+      responses:
+        '204':
+          description: Task deleted – no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Components
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+
+  # ── Security Schemes ──────────────────────────────────────────────────────────
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        JWT issued by the auth-service on successful login. Pass as
+        `Authorization: Bearer <token>` on every protected endpoint.
+
+  # ── Reusable Parameters ───────────────────────────────────────────────────────
+  parameters:
+    AuthorizationHeader:
+      name: Authorization
+      in: header
+      required: true
+      description: Bearer JWT token – `Bearer <token>`
+      schema:
+        type: string
+        example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+  # ── Reusable Responses ────────────────────────────────────────────────────────
+  responses:
+    BadRequest:
+      description: Bad request – missing or invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: id query param is required.
+
+    Unauthorized:
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Unauthorized
+
+    Forbidden:
+      description: Authenticated but insufficient permissions (admin role required)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Forbidden – admin role required
+
+    NotFound:
+      description: Requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Resource not found
+
+    ServiceUnavailable:
+      description: Upstream microservice is unavailable (proxy error)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: Auth service unavailable. Please try again later.
+
+  # ── Schemas ───────────────────────────────────────────────────────────────────
+  schemas:
+
+    # ── Generic ──────────────────────────────────────────────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Something went wrong.
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+
+    # ── Auth ──────────────────────────────────────────────────────────────────────
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        password:
+          type: string
+          format: password
+          example: S3cureP@ss!
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Signed JWT to be used as a Bearer token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ND...
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+          example: user
+
+    RegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: S3cureP@ss!
+
+    RegisterResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: User registered successfully
+        userId:
+          type: string
+          example: 64b1f2e3c9d4a50012abcd01
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 64b1f2e3c9d4a50012abcd01
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+          example: user
+        bio:
+          type: string
+          example: Full-stack developer
+
+    UpdateProfileRequest:
+      type: object
+      description: >
+        Provide either `name/email/bio` to update profile info, or
+        `currentPassword/newPassword` to change the password.
+      properties:
+        name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          format: email
+          example: jane.doe@example.com
+        bio:
+          type: string
+          example: DevOps enthusiast
+        currentPassword:
+          type: string
+          format: password
+          example: OldP@ss1
+        newPassword:
+          type: string
+          format: password
+          example: NewP@ss2
+
+    AdminUpdateRoleRequest:
+      type: object
+      required:
+        - userId
+        - role
+      properties:
+        userId:
+          type: string
+          example: 64b1f2e3c9d4a50012abcd01
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+          example: admin
+
+    # ── Projects ──────────────────────────────────────────────────────────────────
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 64c3a1e5d9b4a60023bcde01
+        name:
+          type: string
+          example: CTSE Assignment
+        description:
+          type: string
+          example: Cloud-native task manager
+        ownerId:
+          type: string
+          example: 64b1f2e3c9d4a50012abcd01
+        taskCount:
+          type: integer
+          example: 5
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-07-19T10:00:00.000Z'
+
+    CreateProjectRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: CTSE Assignment
+        description:
+          type: string
+          example: Cloud-native task manager
+
+    # ── Tasks ─────────────────────────────────────────────────────────────────────
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 64d4b2f6ea5a70034cdef01
+        title:
+          type: string
+          example: Set up CI/CD pipeline
+        description:
+          type: string
+          example: Configure GitHub Actions for the monorepo
+        projectId:
+          type: string
+          example: 64c3a1e5d9b4a60023bcde01
+        status:
+          type: string
+          enum:
+            - TODO
+            - IN_PROGRESS
+            - IN_REVIEW
+            - DONE
+          example: IN_PROGRESS
+        priority:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+          example: high
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-07-20T08:30:00.000Z'
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+        - projectId
+      properties:
+        title:
+          type: string
+          example: Set up CI/CD pipeline
+        description:
+          type: string
+          example: Configure GitHub Actions for the monorepo
+        projectId:
+          type: string
+          example: 64c3a1e5d9b4a60023bcde01
+        priority:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+          example: high
+
+    UpdateTaskRequest:
+      type: object
+      description: All fields are optional – send only what needs to change.
+      properties:
+        title:
+          type: string
+          example: Updated title
+        description:
+          type: string
+          example: Updated description
+        status:
+          type: string
+          enum:
+            - TODO
+            - IN_PROGRESS
+            - IN_REVIEW
+            - DONE
+          example: IN_REVIEW
+        priority:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+          example: medium

@@ -1,291 +1,181 @@
-'use client';
-
 import Link from 'next/link';
 
-const METRICS = [
-  { value: '99.9%', label: 'Uptime SLA' },
-  { value: '<50ms', label: 'P99 Latency' },
-  { value: '5', label: 'Microservices' },
+const HIGHLIGHTS = [
+  {
+    title: 'Project clarity',
+    description: 'Keep plans, priorities, and progress easy to understand.',
+  },
+  {
+    title: 'Task focus',
+    description: 'Move work forward with clear ownership and smoother execution.',
+  },
+  {
+    title: 'Team visibility',
+    description: 'Give everyone a cleaner view of what matters next.',
+  },
+];
+
+const PREVIEW_ITEMS = [
+  { label: 'Active projects', value: '12' },
+  { label: 'In progress', value: '28' },
+  { label: 'Completed this week', value: '46' },
 ];
 
 export default function HeroSection() {
   return (
-    <>
-      <style>{`
-        /* ── Design tokens ── */
-        :root {
-          --color-bg-primary:    #07080f;
-          --color-text-primary:  #f0f2ff;
-          --color-text-secondary:#a0a8c8;
-          --color-text-muted:    #5a6280;
-          --color-accent-cyan:   #22d3ee;
-          --color-dark-base:     #07080f;
-        }
+    <section
+      id="hero"
+      className="relative overflow-hidden px-6 pb-20 pt-32 text-[color:var(--color-text-primary)]"
+    >
+      <div className="absolute inset-0 bg-[color:var(--color-bg-primary)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.14),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.14),transparent_30%),radial-gradient(circle_at_left_bottom,rgba(245,158,11,0.08),transparent_26%)]" />
+      <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(148,163,184,0.55)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.55)_1px,transparent_1px)] [background-size:48px_48px]" />
 
-        /* ── Grid background ── */
-        .hero-grid-bg {
-          position: absolute;
-          inset: 0;
-          opacity: 0.6;
-          background-image:
-            linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
-          background-size: 60px 60px;
-          pointer-events: none;
-        }
-
-        /* ── Badge / tag ── */
-        .hero-tag {
-          display: inline-block;
-          font-family: monospace;
-          font-size: 0.7rem;
-          font-weight: 500;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--color-accent-cyan);
-          background: rgba(34, 211, 238, 0.08);
-          border: 1px solid rgba(34, 211, 238, 0.2);
-          padding: 0.3rem 0.75rem;
-          border-radius: 2px;
-        }
-
-        /* ── Gradient headline span ── */
-        .hero-gradient-text {
-          background: linear-gradient(90deg, #22d3ee 0%, #818cf8 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        /* ── Pulse dot ── */
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.5; transform: scale(1.3); }
-        }
-        .hero-pulse-dot {
-          display: inline-block;
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: var(--color-accent-cyan);
-          animation: pulse-glow 2s ease-in-out infinite;
-          flex-shrink: 0;
-        }
-
-        /* ── Fade-in-up stagger ── */
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .hero-fade { opacity: 0; animation: fadeInUp 0.7s ease forwards; }
-        .hero-fade-d0  { animation-delay: 0ms; }
-        .hero-fade-d100 { animation-delay: 100ms; }
-        .hero-fade-d200 { animation-delay: 200ms; }
-        .hero-fade-d300 { animation-delay: 300ms; }
-        .hero-fade-d400 { animation-delay: 400ms; }
-
-        /* ── Floating scroll cue ── */
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-6px); }
-        }
-        .hero-float { animation: float 3s ease-in-out infinite; }
-
-        /* ── Scroll dot ── */
-        @keyframes scroll-dot {
-          0%   { transform: translateY(0); opacity: 1; }
-          80%  { transform: translateY(10px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 0; }
-        }
-        .hero-scroll-dot {
-          width: 4px;
-          height: 8px;
-          background: var(--color-accent-cyan);
-          border-radius: 2px;
-          animation: scroll-dot 1.6s ease-in-out infinite;
-        }
-
-        /* ── Primary CTA button ── */
-        .hero-btn-primary {
-          font-weight: 700;
-          font-size: 0.95rem;
-          letter-spacing: 0.06em;
-          color: var(--color-dark-base);
-          background: var(--color-accent-cyan);
-          text-decoration: none;
-          padding: 14px 2rem;
-          border-radius: 2px;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .hero-btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 30px rgba(34, 211, 238, 0.3);
-        }
-
-        /* ── Secondary CTA button ── */
-        .hero-btn-secondary {
-          font-weight: 600;
-          font-size: 0.95rem;
-          letter-spacing: 0.05em;
-          color: var(--color-text-primary);
-          background: transparent;
-          text-decoration: none;
-          padding: 14px 2rem;
-          border-radius: 2px;
-          border: 1px solid rgba(255,255,255,0.15);
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          transition: border-color 0.2s ease, background 0.2s ease;
-        }
-        .hero-btn-secondary:hover {
-          border-color: rgba(34, 211, 238, 0.4);
-          background: rgba(34, 211, 238, 0.05);
-        }
-      `}</style>
-
-      <section
-        id="hero"
-        style={{
-          position: 'relative',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          paddingTop: '68px',
-          background: 'var(--color-bg-primary)',
-        }}
-      >
-        {/* Animated grid background */}
-        <div className="hero-grid-bg" />
-
-        {/* Radial glow blobs */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '15%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '700px',
-            height: '400px',
-            zIndex: 1,
-            pointerEvents: 'none',
-            background: 'radial-gradient(ellipse at center, rgba(34,211,238,0.12) 0%, transparent 70%)',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '10%',
-            left: '20%',
-            width: '400px',
-            height: '300px',
-            zIndex: 1,
-            pointerEvents: 'none',
-            background: 'radial-gradient(ellipse at center, rgba(129,140,248,0.1) 0%, transparent 70%)',
-          }}
-        />
-
-        {/* Content */}
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 2,
-            maxWidth: '1280px',
-            margin: '0 auto',
-            padding: '5rem 2rem',
-            textAlign: 'center',
-            width: '100%',
-          }}
-        >
-          {/* Top badge */}
-          <div className="hero-fade hero-fade-d0" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
-            <span className="hero-tag">Microservice Platform</span>
-            <span className="hero-pulse-dot" />
-            <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--color-text-muted)', letterSpacing: '0.08em' }}>
-              ALL SYSTEMS OPERATIONAL
-            </span>
+      <div className="relative mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl items-center gap-14 lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="max-w-3xl">
+          <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-[color:var(--color-border-accent)] bg-[color:var(--color-bg-card)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--color-accent-cyan)] shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-[color:var(--color-accent-cyan)] shadow-[0_0_18px_rgba(34,211,238,0.55)]" />
+            Workflow Platform
           </div>
 
-          {/* Headline */}
-          <h1
-            className="hero-fade hero-fade-d100"
-            style={{
-              fontWeight: 800,
-              lineHeight: 1.05,
-              letterSpacing: '-0.02em',
-              color: 'var(--color-text-primary)',
-              marginBottom: '1.5rem',
-              fontSize: 'clamp(2.8rem, 7vw, 6rem)',
-            }}
-          >
-            Build. Ship.{' '}
-            <span className="hero-gradient-text">Deliver.</span>
+          <h1 className="max-w-4xl text-5xl font-extrabold leading-[0.95] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
+            Organize work.
             <br />
-            At Scale.
+            <span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 bg-clip-text text-transparent">
+              Keep teams moving.
+            </span>
           </h1>
 
-          {/* Sub-headline */}
-          <p
-            className="hero-fade hero-fade-d200"
-            style={{
-              fontWeight: 400,
-              color: 'var(--color-text-secondary)',
-              maxWidth: '600px',
-              margin: '0 auto 3rem',
-              lineHeight: 1.7,
-              fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-            }}
-          >
-            A distributed microservice platform for managing projects, tasks, and teams —
-            with real-time analytics and enterprise-grade authentication built in from day one.
+          <p className="mt-6 max-w-2xl text-base leading-8 text-[color:var(--color-text-secondary)] sm:text-lg">
+            A modern workspace for planning projects, tracking tasks, and giving every team a clearer view of what needs attention next.
           </p>
 
-          {/* CTA Buttons */}
-          <div
-            className="hero-fade hero-fade-d300"
-            style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '4.5rem' }}
-          >
-            <Link href="/signup" className="hero-btn-primary">
-              Start Free Trial
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path d="M5 12h14M12 5l7 7-7 7" />
+          <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+            <Link
+              href="/signup"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[color:var(--color-text-primary)] px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--color-bg-primary)] transition duration-300 hover:-translate-y-0.5"
+            >
+              Get Started
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12H19M12 5L19 12L12 19"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </Link>
-            <Link href="#services" className="hero-btn-secondary">
-              Explore Architecture
+
+            <Link
+              href="#services"
+              className="inline-flex items-center gap-2 rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--color-text-primary)] transition duration-300 hover:-translate-y-0.5 hover:border-[color:var(--color-border-accent)]"
+            >
+              Explore Platform
             </Link>
           </div>
 
-          {/* Metrics strip */}
-          <div
-            className="hero-fade hero-fade-d400"
-            style={{ display: 'flex', justifyContent: 'center', gap: '3rem', flexWrap: 'wrap' }}
-          >
-            {METRICS.map((m) => (
-              <div key={m.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontWeight: 800, fontSize: '1.8rem', color: 'var(--color-accent-cyan)', letterSpacing: '-0.02em' }}>
-                  {m.value}
+          <div className="mt-12 grid gap-4 sm:grid-cols-3">
+            {HIGHLIGHTS.map((item) => (
+              <div
+                key={item.title}
+                className="rounded-3xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--color-border-accent)]"
+              >
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl border border-[color:var(--color-border-accent)] bg-[color:var(--color-bg-secondary)]" />
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-text-muted)]">
+                    Core Value
+                  </p>
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px' }}>
-                  {m.label}
-                </div>
+
+                <h3 className="text-lg font-semibold text-[color:var(--color-text-primary)]">
+                  {item.title}
+                </h3>
+
+                <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-secondary)]">
+                  {item.description}
+                </p>
               </div>
             ))}
           </div>
+        </div>
 
-          {/* Scroll cue */}
-          <div className="hero-float" style={{ marginTop: '5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', opacity: 0.4 }}>
-            <div style={{ width: '24px', height: '38px', border: '2px solid rgba(255,255,255,0.2)', borderRadius: '12px', display: 'flex', justifyContent: 'center', paddingTop: '6px' }}>
-              <div className="hero-scroll-dot" />
+        <div className="relative">
+          <div className="absolute -left-8 top-10 h-28 w-28 rounded-full bg-cyan-400/15 blur-3xl" />
+          <div className="absolute -right-6 bottom-8 h-28 w-28 rounded-full bg-violet-500/15 blur-3xl" />
+
+          <div className="relative overflow-hidden rounded-[32px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-6 shadow-[0_30px_80px_rgba(15,23,42,0.14)]">
+            <div className="flex items-center justify-between border-b border-[color:var(--color-border)] pb-5">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+                  Workspace Overview
+                </p>
+                <h3 className="mt-2 text-2xl font-bold text-[color:var(--color-text-primary)]">
+                  Delivery at a glance
+                </h3>
+              </div>
+
+              <div className="rounded-2xl border border-[color:var(--color-border-accent)] bg-cyan-400/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--color-accent-cyan)]">
+                Live View
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              {PREVIEW_ITEMS.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] p-4"
+                >
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
+                    {item.label}
+                  </p>
+                  <p className="mt-3 text-3xl font-bold text-[color:var(--color-text-primary)]">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {[
+                { title: 'Planning board', text: 'Clear priorities with structured progress tracking.', width: 'w-[88%]' },
+                { title: 'Team coordination', text: 'Shared visibility across ongoing work and ownership.', width: 'w-[72%]' },
+                { title: 'Delivery flow', text: 'A cleaner path from idea to execution.', width: 'w-[94%]' },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-semibold text-[color:var(--color-text-primary)]">
+                        {item.title}
+                      </h4>
+                      <p className="mt-1 text-sm leading-6 text-[color:var(--color-text-secondary)]">
+                        {item.text}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-500">
+                      Active
+                    </span>
+                  </div>
+
+                  <div className="mt-4 h-2 rounded-full bg-black/5 dark:bg-white/5">
+                    <div
+                      className={`h-2 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 ${item.width}`}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
