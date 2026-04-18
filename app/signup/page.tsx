@@ -82,11 +82,11 @@ export default function SignupPage() {
     <div className="relative min-h-screen overflow-hidden bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)]">
       <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(148,163,184,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.35)_1px,transparent_1px)] [background-size:42px_42px]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(129,140,248,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.10),transparent_26%)]" />
-      <div className="pointer-events-none absolute left-1/2 top-[28%] h-[320px] w-[620px] -translate-x-1/2 rounded-full bg-violet-500/15 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/2 top-[26%] h-[220px] w-[380px] -translate-x-1/2 rounded-full bg-violet-500/15 blur-3xl sm:top-[28%] sm:h-[320px] sm:w-[620px]" />
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-12">
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
         <div className="w-full max-w-[460px]">
-          <Link href="/" className="mb-10 flex items-center justify-center gap-3">
+          <Link href="/" className="mb-8 flex items-center justify-center gap-3 sm:mb-10">
             <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/20 via-sky-400/10 to-violet-500/20">
               <div className="h-6 w-6 bg-gradient-to-br from-cyan-300 via-sky-400 to-violet-500 [clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]" />
             </div>
@@ -96,14 +96,14 @@ export default function SignupPage() {
             </span>
           </Link>
 
-          <div className="overflow-hidden rounded-[30px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)]/90 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)] backdrop-blur-2xl sm:p-8">
-            <div className="mb-8">
+          <div className="overflow-hidden rounded-[30px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)]/90 p-5 shadow-[0_30px_80px_rgba(15,23,42,0.18)] backdrop-blur-2xl sm:p-8">
+            <div className="mb-6 sm:mb-8">
               <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border-accent)] bg-[color:var(--color-bg-secondary)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-accent-cyan)]">
                 <span className="h-2 w-2 rounded-full bg-[color:var(--color-accent-cyan)]" />
                 Create workspace account
               </p>
 
-              <h1 className="text-3xl font-extrabold tracking-[-0.03em] text-[color:var(--color-text-primary)]">
+              <h1 className="text-2xl font-extrabold tracking-[-0.03em] text-[color:var(--color-text-primary)] sm:text-3xl">
                 Create account
               </h1>
 

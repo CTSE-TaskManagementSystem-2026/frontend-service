@@ -173,7 +173,7 @@ export default function TasksPage() {
       actions={
         <Link
           href="/tasks/create"
-          className="hidden items-center gap-2 rounded-2xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.14em] text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(34,211,238,0.2)] sm:inline-flex"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-3 text-sm font-semibold uppercase tracking-[0.14em] text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(34,211,238,0.2)] sm:h-auto sm:px-4 sm:py-2.5"
         >
           <svg
             width="13"
@@ -186,13 +186,13 @@ export default function TasksPage() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          New Task
+          <span className="hidden sm:inline">New Task</span>
         </Link>
       }
     >
       {showCreate && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-[520px] overflow-hidden rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] shadow-[0_30px_80px_rgba(15,23,42,0.2)]">
+        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/60 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="max-h-[90vh] w-full max-w-[520px] overflow-y-auto rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] shadow-[0_30px_80px_rgba(15,23,42,0.2)]">
             <div className="h-20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_34%),radial-gradient(circle_at_top_right,rgba(129,140,248,0.14),transparent_30%)]" />
 
             <div className="space-y-5 p-6 sm:p-8">
@@ -314,8 +314,8 @@ export default function TasksPage() {
         </div>
       )}
 
-      <div className="mb-6 flex flex-wrap items-center gap-4">
-        <div className="relative min-w-[220px] flex-1 sm:max-w-[320px]">
+      <div className="mb-6 flex flex-col gap-3 xl:flex-row xl:items-center">
+        <div className="relative w-full xl:max-w-[320px] xl:flex-1">
           <svg
             width="14"
             height="14"
@@ -338,7 +338,7 @@ export default function TasksPage() {
           />
         </div>
 
-        <div className="flex flex-wrap gap-2 rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-2">
+        <div className="flex w-full flex-wrap gap-2 rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-2 xl:w-auto">
           {['ALL', 'high', 'medium', 'low'].map((p) => {
             const active = priorityFilter === p;
             return (
@@ -356,14 +356,14 @@ export default function TasksPage() {
           })}
         </div>
 
-        <div className="ml-auto flex gap-2 rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-2">
+        <div className="flex w-full gap-2 rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-2 sm:w-auto xl:ml-auto">
           {(['KANBAN', 'LIST'] as ViewMode[]).map((v) => {
             const active = view === v;
             return (
               <button
                 key={v}
                 onClick={() => setView(v)}
-                className={`rounded-xl px-3 py-2 font-mono text-[11px] uppercase tracking-[0.12em] transition duration-200 ${active
+                className={`flex-1 rounded-xl px-3 py-2 font-mono text-[11px] uppercase tracking-[0.12em] transition duration-200 sm:flex-none ${active
                     ? 'bg-cyan-400/15 text-cyan-300'
                     : 'text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-bg-secondary)] hover:text-[color:var(--color-text-secondary)]'
                   }`}
@@ -382,14 +382,14 @@ export default function TasksPage() {
       )}
 
       {!loading && view === 'KANBAN' && (
-        <div className="flex gap-4 overflow-x-auto pb-2">
+        <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
           {COLUMNS.map((col) => {
             const colTasks = filtered.filter((t) => t.status === col);
 
             return (
               <div
                 key={col}
-                className="min-h-[160px] min-w-[280px] flex-1 overflow-hidden rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)]"
+                className="min-h-[160px] min-w-[85vw] flex-1 overflow-hidden rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] sm:min-w-[320px]"
               >
                 <div className="flex items-center gap-3 border-b border-[color:var(--color-border)] px-5 py-4">
                   <div
@@ -484,20 +484,118 @@ export default function TasksPage() {
       )}
 
       {!loading && view === 'LIST' && (
-        <div className="overflow-x-auto rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)]">
-          <div className="min-w-[900px]">
-            <div className="grid grid-cols-[minmax(260px,1fr)_120px_150px_140px_110px_90px] gap-4 border-b border-[color:var(--color-border)] px-5 py-4">
-              {['Task', 'Priority', 'Status', 'Project ID', 'Created', 'Action'].map(
-                (h) => (
+        <div className="overflow-hidden rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)]">
+          <div className="space-y-3 p-3 lg:hidden">
+            {filtered.map((task) => (
+              <div
+                key={task._id}
+                className="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] p-4"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div
+                      className="text-sm font-semibold"
+                      style={{
+                        color:
+                          task.status === 'DONE'
+                            ? 'var(--color-text-muted)'
+                            : 'var(--color-text-primary)',
+                        textDecoration:
+                          task.status === 'DONE' ? 'line-through' : 'none',
+                      }}
+                    >
+                      {task.title}
+                    </div>
+
+                    {task.description && (
+                      <div className="mt-1 text-xs leading-6 text-[color:var(--color-text-muted)]">
+                        {task.description}
+                      </div>
+                    )}
+                  </div>
+
                   <span
-                    key={h}
-                    className="font-mono text-[11px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]"
+                    className="rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+                    style={{ color: PRIORITY_COLOR[task.priority] ?? '#94A3B8' }}
                   >
-                    {h}
+                    {task.priority.toUpperCase()}
                   </span>
-                )
-              )}
-            </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                      Status
+                    </div>
+                    <select
+                      value={task.status}
+                      disabled={patchingId === task._id}
+                      onChange={(e) => handleStatusChange(task._id, e.target.value)}
+                      className="w-full rounded-xl border px-3 py-2 font-mono text-[11px] uppercase tracking-[0.08em] outline-none"
+                      style={{
+                        color: STATUS_COLOR[task.status] ?? '#94A3B8',
+                        background: `${STATUS_COLOR[task.status] ?? '#94A3B8'}18`,
+                        borderColor: `${STATUS_COLOR[task.status] ?? '#94A3B8'}40`,
+                      }}
+                    >
+                      {COLUMNS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                      Project ID
+                    </div>
+                    <div className="truncate rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] px-3 py-2 font-mono text-[11px] text-[color:var(--color-text-secondary)]">
+                      {task.projectId}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[color:var(--color-text-muted)]">
+                    {new Date(task.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </span>
+
+                  <button
+                    onClick={() => handleDelete(task._id)}
+                    disabled={deletingId === task._id}
+                    className="rounded-xl border border-red-500/30 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-red-400 transition duration-200 hover:bg-red-500/10 disabled:opacity-50"
+                  >
+                    {deletingId === task._id ? '...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {filtered.length === 0 && (
+              <div className="px-4 py-12 text-center font-mono text-xs uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+                No tasks found
+              </div>
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto lg:block">
+            <div className="min-w-[900px]">
+              <div className="grid grid-cols-[minmax(260px,1fr)_120px_150px_140px_110px_90px] gap-4 border-b border-[color:var(--color-border)] px-5 py-4">
+                {['Task', 'Priority', 'Status', 'Project ID', 'Created', 'Action'].map(
+                  (h) => (
+                    <span
+                      key={h}
+                      className="font-mono text-[11px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]"
+                    >
+                      {h}
+                    </span>
+                  )
+                )}
+              </div>
 
             {filtered.map((task, i) => (
               <div
@@ -581,6 +679,7 @@ export default function TasksPage() {
               </div>
             )}
           </div>
+        </div>
         </div>
       )}
     </DashboardLayout>

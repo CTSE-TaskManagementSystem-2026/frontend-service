@@ -199,7 +199,91 @@ export default function TasksTab({ token }: Props) {
                         No tasks found
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <>
+                    <div className="space-y-3 p-3 lg:hidden">
+                        {filtered.map((t) => {
+                            const p =
+                                PRIORITY_STYLE[t.priority.toLowerCase()] ?? PRIORITY_STYLE.medium;
+                            const st = STATUS_STYLE[t.status] ?? STATUS_STYLE.TODO;
+
+                            return (
+                                <div
+                                    key={t._id}
+                                    className="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] p-4"
+                                >
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-sm font-semibold text-[color:var(--color-text-primary)]">
+                                                {t.title}
+                                            </div>
+
+                                            {t.description && (
+                                                <div className="mt-1 text-xs leading-6 text-[color:var(--color-text-muted)]">
+                                                    {t.description}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2">
+                                            <span
+                                                className="inline-flex rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+                                                style={{
+                                                    color: st.color,
+                                                    background: st.bg,
+                                                    borderColor: st.border,
+                                                }}
+                                            >
+                                                {t.status}
+                                            </span>
+
+                                            <span
+                                                className="inline-flex rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+                                                style={{
+                                                    color: p.color,
+                                                    background: p.bg,
+                                                    borderColor: p.border,
+                                                }}
+                                            >
+                                                {t.priority}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                        <div>
+                                            <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                                                Project ID
+                                            </div>
+                                            <div className="truncate font-mono text-xs text-[color:var(--color-text-secondary)]">
+                                                {t.projectId}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                                                Created
+                                            </div>
+                                            <div className="font-mono text-xs text-[color:var(--color-text-secondary)]">
+                                                {new Date(t.createdAt).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <button
+                                            disabled={deletingId === t._id}
+                                            onClick={() => handleDelete(t._id, t.title)}
+                                            className="rounded-xl border border-red-500/30 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-red-400 transition duration-200 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                            {deletingId === t._id ? '...' : 'Delete'}
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="hidden overflow-x-auto lg:block">
                         <div className="min-w-[980px]">
                             <div className="grid grid-cols-[minmax(280px,1.7fr)_150px_130px_150px_140px_110px] gap-4 border-b border-[color:var(--color-border)] px-6 py-4">
                                 {['Title', 'Status', 'Priority', 'Project ID', 'Created', 'Action'].map((h) => (
@@ -286,6 +370,7 @@ export default function TasksTab({ token }: Props) {
                             })}
                         </div>
                     </div>
+                    </>
                 )}
             </div>
         </div>

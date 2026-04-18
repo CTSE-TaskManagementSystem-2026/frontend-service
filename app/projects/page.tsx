@@ -121,13 +121,13 @@ export default function ProjectsPage() {
       actions={
         <Link
           href="/projects/create"
-          className="hidden items-center gap-2 rounded-2xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.14em] text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(34,211,238,0.2)] sm:inline-flex"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-3 text-sm font-semibold uppercase tracking-[0.14em] text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(34,211,238,0.2)] sm:h-auto sm:px-4 sm:py-2.5"
         >
           <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          New Project
+          <span className="hidden sm:inline">New Project</span>
         </Link>
       }
     >
@@ -137,8 +137,8 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      <div className="mb-6 flex flex-wrap items-center gap-4">
-        <div className="relative min-w-[220px] flex-1 sm:max-w-[340px]">
+      <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="relative w-full lg:max-w-[340px] lg:flex-1">
           <svg
             width="14"
             height="14"
@@ -161,7 +161,7 @@ export default function ProjectsPage() {
           />
         </div>
 
-        <div className="flex flex-wrap gap-2 rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-2">
+        <div className="flex w-full flex-wrap gap-2 rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-2 lg:w-auto lg:flex-1">
           {FILTER_LABELS.map(({ value, label }) => {
             const active = filter === value;
 
@@ -181,14 +181,14 @@ export default function ProjectsPage() {
         </div>
 
         {!loading && (
-          <span className="ml-auto font-mono text-[11px] uppercase tracking-[0.12em] text-[color:var(--color-text-muted)]">
+          <span className="self-start font-mono text-[11px] uppercase tracking-[0.12em] text-[color:var(--color-text-muted)] lg:ml-auto lg:self-center">
             {filtered.length} / {projects.length} projects
           </span>
         )}
       </div>
 
       {loading && (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
@@ -199,7 +199,7 @@ export default function ProjectsPage() {
       )}
 
       {!loading && (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((project) => {
             const meta = STATUS_META[project.status] ?? {
               label: project.status.toUpperCase(),
@@ -218,13 +218,13 @@ export default function ProjectsPage() {
                 href={`/projects/${project._id}`}
                 className="group block"
               >
-                <div className="relative flex h-full flex-col overflow-hidden rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--color-border-accent)] hover:shadow-[0_28px_80px_rgba(34,211,238,0.08)]">
+                <div className="relative flex h-full flex-col overflow-hidden rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--color-border-accent)] hover:shadow-[0_28px_80px_rgba(34,211,238,0.08)] sm:p-6">
                   <div
                     className="absolute inset-x-0 top-0 h-[3px]"
                     style={{ background: accent }}
                   />
 
-                  <div className="mb-5 flex items-start justify-between gap-4">
+                  <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
                     <div
                       className="flex h-11 w-11 items-center justify-center rounded-2xl border text-sm font-extrabold"
                       style={{
@@ -280,7 +280,7 @@ export default function ProjectsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 flex items-center justify-between gap-3">
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2">
                       {project.dueDate ? (
                         <>

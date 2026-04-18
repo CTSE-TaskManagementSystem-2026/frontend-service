@@ -218,11 +218,11 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="relative flex min-h-screen bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] transition-colors duration-300">
+    <div className="relative flex min-h-screen overflow-x-clip bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] transition-colors duration-300">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(148,163,184,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.35)_1px,transparent_1px)] [background-size:42px_42px]" />
-        <div className={`absolute left-[12%] top-20 h-72 w-72 rounded-full blur-3xl ${shellClasses.pageGlowOne}`} />
-        <div className={`absolute bottom-10 right-[8%] h-72 w-72 rounded-full blur-3xl ${shellClasses.pageGlowTwo}`} />
+        <div className={`absolute left-[8%] top-20 h-52 w-52 rounded-full blur-3xl sm:left-[12%] sm:h-72 sm:w-72 ${shellClasses.pageGlowOne}`} />
+        <div className={`absolute bottom-10 right-[4%] h-52 w-52 rounded-full blur-3xl sm:right-[8%] sm:h-72 sm:w-72 ${shellClasses.pageGlowTwo}`} />
       </div>
 
       {sidebarOpen && (
@@ -235,10 +235,10 @@ export default function DashboardLayout({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[268px] flex-col border-r border-[color:var(--color-border)] ${shellClasses.sidebar} backdrop-blur-2xl transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(85vw,268px)] flex-col border-r border-[color:var(--color-border)] ${shellClasses.sidebar} backdrop-blur-2xl transition-transform duration-300 sm:w-[268px] md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
       >
-        <div className="flex items-center gap-3 border-b border-[color:var(--color-border)] px-6 py-5">
+        <div className="flex items-center gap-3 border-b border-[color:var(--color-border)] px-5 py-5 sm:px-6">
           <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/20 via-sky-400/10 to-violet-500/20">
             <div className="h-6 w-6 bg-gradient-to-br from-cyan-300 via-sky-400 to-violet-500 [clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]" />
           </div>
@@ -253,7 +253,7 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-4">
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
           <div className="space-y-1.5">
             {NAV_ITEMS.map((item) => {
               const active =
@@ -321,8 +321,8 @@ export default function DashboardLayout({
         <header
           className={`sticky top-0 z-30 border-b border-[color:var(--color-border)] ${shellClasses.header} backdrop-blur-2xl transition-colors duration-300`}
         >
-          <div className="flex h-[76px] items-center justify-between px-4 sm:px-6">
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-h-[76px] flex-wrap items-center justify-between gap-3 px-3 py-3 sm:px-6 md:flex-nowrap">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border transition duration-200 md:hidden ${shellClasses.neutralBtn}`}
@@ -348,7 +348,7 @@ export default function DashboardLayout({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex w-full items-center justify-end gap-2 sm:gap-3 md:w-auto">
               {actions}
 
               <button
@@ -401,7 +401,7 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        <main className="relative flex-1 px-4 py-6 sm:px-6">{children}</main>
+        <main className="relative flex-1 px-3 py-4 sm:px-6 sm:py-6">{children}</main>
       </div>
     </div>
   );

@@ -155,7 +155,85 @@ export default function ProjectsTab({ token }: Props) {
                         No projects found
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <>
+                    <div className="space-y-3 p-3 lg:hidden">
+                        {filtered.map((p) => {
+                            const s = STATUS_STYLE[p.status] ?? STATUS_STYLE.inactive;
+
+                            return (
+                                <div
+                                    key={p._id}
+                                    className="rounded-[24px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-secondary)] p-4"
+                                >
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-sm font-semibold text-[color:var(--color-text-primary)]">
+                                                {p.name}
+                                            </div>
+
+                                            {p.description && (
+                                                <div className="mt-1 text-xs leading-6 text-[color:var(--color-text-muted)]">
+                                                    {p.description}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <span
+                                            className="inline-flex rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+                                            style={{
+                                                color: s.color,
+                                                background: s.bg,
+                                                borderColor: s.border,
+                                            }}
+                                        >
+                                            {p.status}
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                                        <div>
+                                            <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                                                Tasks
+                                            </div>
+                                            <div className="font-mono text-xs text-[color:var(--color-text-secondary)]">
+                                                {p.tasksCount ?? 0}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                                                Due Date
+                                            </div>
+                                            <div className="font-mono text-xs text-[color:var(--color-text-secondary)]">
+                                                {p.dueDate ? new Date(p.dueDate).toLocaleDateString() : '-'}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                                                Created
+                                            </div>
+                                            <div className="font-mono text-xs text-[color:var(--color-text-secondary)]">
+                                                {new Date(p.createdAt).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <button
+                                            disabled={deletingId === p._id}
+                                            onClick={() => handleDelete(p._id, p.name)}
+                                            className="rounded-xl border border-red-500/30 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-red-400 transition duration-200 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                            {deletingId === p._id ? '...' : 'Delete'}
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="hidden overflow-x-auto lg:block">
                         <div className="min-w-[900px]">
                             <div className="grid grid-cols-[minmax(260px,1.6fr)_130px_90px_140px_140px_110px] gap-4 border-b border-[color:var(--color-border)] px-6 py-4">
                                 {['Name', 'Status', 'Tasks', 'Due Date', 'Created', 'Action'].map((h) => (
@@ -231,6 +309,7 @@ export default function ProjectsTab({ token }: Props) {
                             })}
                         </div>
                     </div>
+                    </>
                 )}
             </div>
         </div>
