@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ThemeInitializer from "@/app/components/ThemeInitializer";
 
 export const metadata: Metadata = {
   title: "TaskMaster",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ThemeInitializer />
+        {children}
+      </body>
     </html>
   );
 }
