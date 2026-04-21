@@ -112,7 +112,7 @@ export default function HeroSection() {
 
           <div className="mt-10 rounded-[28px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-card)]/75 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.10)] backdrop-blur-xl sm:p-5">
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <Link
+              {/* <Link
                 href="/signup"
                 aria-label="Get started with TaskMaster"
                 className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-violet-600 px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_18px_45px_rgba(34,211,238,0.25)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(34,211,238,0.35)] hover:from-cyan-400 hover:to-violet-500"
@@ -132,7 +132,7 @@ export default function HeroSection() {
                     strokeLinejoin="round"
                   />
                 </svg>
-              </Link>
+              </Link> */}
 
               <Link
                 href="#services"
